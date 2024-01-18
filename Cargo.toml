@@ -1,7 +1,11 @@
 [package]
-name = "swift_vec"
+name    = "swift_vec"
 version = "0.1.0"
 edition = "2021"
+exclude = [
+    ".github/*",
+    ".vscode/*",
+]
 
 [dependencies]
 num-traits = "0.2.17"
