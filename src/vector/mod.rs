@@ -104,7 +104,7 @@ pub trait Vector<T: Scalar, V: Vector<T, V, A>, A>: VectorAbstract<T, V> {
 
     /// Clamps this vector between a minimum and maximum scalar threshold and returns the result.
     fn clamp(&self, min: T, max: T) -> V {
-        self.min(min).max(max)
+        self.min(max).max(min)
     }
 }
 
@@ -341,47 +341,19 @@ pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<
 
     /// Calculates the derivative of the Bézier curve set by this vector and the given control and terminal points
     /// at position `t`.
-    fn bezier_derivative(&self, control_1: &V, control_2: &V, terminal: &V, t: T) -> V {
-        todo!()
-    }
+    fn bezier_derivative(&self, control_1: &V, control_2: &V, terminal: &V, t: T) -> V;
 
     /// Calculates the point on the Bézier curve set by this vector and the given control and terminal points
     /// at position `t`.
-    fn bezier_sample(&self, control_1: &V, control_2: &V, terminal: &V, t: T) -> V {
-        todo!()
-    }
+    fn bezier_sample(&self, control_1: &V, control_2: &V, terminal: &V, t: T) -> V;
 
     /// Calculates and samples the cubic interpolation between this vector and another
     /// given `pre_start` and `post_terminal` vectors as handles, and a given `t` value.
-    fn cubic_interpolate(&self, terminal: &V, pre_start: &V, post_terminal: &V, t: T) -> V {
+    fn cubic_interpolate(&self, terminal: &V, pre_start: &V, post_terminal: &V, t: T) -> V;
 
-        // Good luck reading this lol
-        
-        // Define the points of the cubic interpolation.
-        let p0: V = pre_start.to_owned();
-        let p1: V = self.identity().to_owned();
-        let p2: V = terminal.to_owned();
-        let p3: V = post_terminal.to_owned();
-
-        // Define some commonly used constant values.
-        let t_05: T = T::from(0.5).unwrap();
-        let t_2:  T = T::from(2.0).unwrap();
-        let t_3:  T = T::from(3.0).unwrap();
-        let t_4:  T = T::from(4.0).unwrap();
-        let t_5:  T = T::from(5.0).unwrap();
-
-        let t2: T = t * t;
-        let t3: T = t2 * t;
-
-        // Calculate the out vector.
-        ((p1.clone() * t_2) + (-p0.clone() + p2.clone()) * t + ((p0.clone() * t_2) - (p1.clone() * t_5) + (p2.clone() * t_4) - p3.clone()) * t2 + (-p0 + (p1 * t_3) - (p2 * t_3) + p3) * t3) * t_05
-    }
-
-    /// Similar to `cubic_interpolate`, but it has additional time parameters `pre_start_t` and `post_terminal_t`.
-    /// This can be smoother than `cubic_interpolate`.
-    fn cubic_interpolate_with_times(&self, pre_start: &V, post_terminal: &V, pre_start_t: T, post_terminal_t: T, t: T) -> V {
-        todo!()
-    }
+    /// Similar to `cubic_interpolate`, but it has additional time parameters `terminal_t`, `pre_start_t`, and `post_terminal_t`.
+    /// This can be smoother than `cubic_interpolate` in certain instances.
+    fn cubic_interpolate_in_time(&self, terminal: &V, pre_start: &V, post_terminal: &V, t0: T, terminal_t: &V, pre_start_t: &V, post_terminal_t: &V) -> V;
 
     /// Spherically interpolates between two vectors.
     /// This interpolation is focused on the length or magnitude of the vectors. If the magnitudes are equal,

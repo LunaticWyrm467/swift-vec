@@ -95,17 +95,11 @@ impl <T: Scalar> Vector<T, Vec2<T>, Axis2> for Vec2<T>  {
     }
 
     fn v_min(&self, other: &Vec2<T>) -> Vec2<T> {
-        Vec2(
-            if self.x() < other.x() { self.x() } else { other.x() },
-            if self.y() < other.y() { self.y() } else { other.y() }
-        )
+        Vec2(self.x().min(other.x()), self.y().min(other.y()))
     }
 
     fn v_max(&self, other: &Vec2<T>) -> Vec2<T> {
-        Vec2(
-            if self.x() > other.x() { self.x() } else { other.x() },
-            if self.y() > other.y() { self.y() } else { other.y() }
-        )
+        Vec2(self.x().max(other.x()), self.y().max(other.y()))
     }
 }
 
@@ -184,6 +178,34 @@ impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2> for Vec2<T> {
 
     fn distance_squared_to(&self, other: &Vec2<T>) -> T {
         (self.x() - other.x()).powi(2) + (self.y() - other.y()).powi(2)
+    }
+
+    fn bezier_derivative(&self, control_1: &Vec2<T>, control_2: &Vec2<T>, terminal: &Vec2<T>, t: T) -> Vec2<T> {
+        Vec2(
+            self.x().bezier_derivative(control_1.x(), control_2.x(), terminal.x(), t),
+            self.y().bezier_derivative(control_1.y(), control_2.y(), terminal.y(), t)
+        )
+    }
+
+    fn bezier_sample(&self, control_1: &Vec2<T>, control_2: &Vec2<T>, terminal: &Vec2<T>, t: T) -> Vec2<T> {
+        Vec2(
+            self.x().bezier_sample(control_1.x(), control_2.x(), terminal.x(), t),
+            self.y().bezier_sample(control_1.y(), control_2.y(), terminal.y(), t)
+        )
+    }
+
+    fn cubic_interpolate(&self, terminal: &Vec2<T>, pre_start: &Vec2<T>, post_terminal: &Vec2<T>, t: T) -> Vec2<T> {
+        Vec2(
+            self.x().cubic_interpolate(terminal.x(), pre_start.x(), post_terminal.x(), t),
+            self.y().cubic_interpolate(terminal.y(), pre_start.y(), post_terminal.y(), t)
+        )
+    }
+
+    fn cubic_interpolate_in_time(&self, terminal: &Vec2<T>, pre_start: &Vec2<T>, post_terminal: &Vec2<T>, t0: T, terminal_t: &Vec2<T>, pre_start_t: &Vec2<T>, post_terminal_t: &Vec2<T>) -> Vec2<T> {
+        Vec2(
+            self.x().cubic_interpolate_in_time(terminal.x(), pre_start.x(), post_terminal.x(), t0, terminal_t.x(), pre_start_t.x(), post_terminal_t.x()),
+            self.y().cubic_interpolate_in_time(terminal.y(), pre_start.y(), post_terminal.y(), t0, terminal_t.y(), pre_start_t.y(), post_terminal_t.y())
+        )
     }
 
     fn dot(&self, other: &Vec2<T>) -> T {
