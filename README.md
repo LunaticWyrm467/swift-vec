@@ -1,5 +1,6 @@
 # SwiftVec
 ![GitHub License](https://img.shields.io/github/license/LunaticWyrm467/SwiftVec)
+![Crates.io Version](https://img.shields.io/crates/v/swift_vec)
 
 **SwiftVec** is an easy-to-use, intuitive vector maths library with a ton
 of functionality for game development, physics simulations, and other potential use cases.
