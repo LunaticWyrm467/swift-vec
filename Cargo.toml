@@ -1,6 +1,6 @@
 [package]
 name    = "swift_vec"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 exclude = [
     ".github/*",
@@ -8,6 +8,7 @@ exclude = [
     "tests/*",
 ]
 
+repository = "https://github.com/LunaticWyrm467/SwiftVec"
 description = "A convenient and comfortable vector maths crate that supports 2D, 3D, and 4D vectors - along with additional scalar math."
 license     = "MIT OR Apache-2.0"
 
