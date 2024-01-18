@@ -1,4 +1,4 @@
-use approx::RelativeEq;
+use approx::{RelativeEq, AbsDiffEq};
 use num_traits::{ Num, Signed, Float, FloatConst, PrimInt, FromPrimitive, ToPrimitive };
 
 
@@ -124,7 +124,7 @@ pub trait SignedScalar: Scalar + Signed {
 }
 
 /// Implements unique operations for all floating point primitives.
-pub trait FloatScalar: SignedScalar + Float + FloatConst + RelativeEq {}
+pub trait FloatScalar: SignedScalar + Float + FloatConst + RelativeEq + AbsDiffEq<Epsilon = Self> {}
 
 /// Adds some additional operations featured in rust that are not available in the standard PrimInt trait for some odd reason.
 pub trait IntUnique<T: IntScalar<T>> {
@@ -141,7 +141,7 @@ pub trait IntUnique<T: IntScalar<T>> {
 impl <T: Clone + Copy + Num + Default + PartialOrd + std::fmt::Display + std::fmt::Debug + FromPrimitive + ToPrimitive> Scalar for T {}
 impl <T: Scalar + Ord + PrimInt + IntUnique<T>> IntScalar<T> for T {}
 impl <T: Scalar + Signed> SignedScalar for T {}
-impl <T: SignedScalar + Float + FloatConst + RelativeEq> FloatScalar for T {}
+impl <T: SignedScalar + Float + FloatConst + RelativeEq + AbsDiffEq<Epsilon = Self>> FloatScalar for T {}
 
 impl IntUnique<u8> for u8 {
     fn ilog(self, base: u8) -> u8 {

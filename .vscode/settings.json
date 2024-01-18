@@ -12,5 +12,8 @@
         "powi",
         "signum",
         "slerp"
+    ],
+    "rust-analyzer.linkedProjects": [
+        ".\\Cargo.toml"
     ]
 }

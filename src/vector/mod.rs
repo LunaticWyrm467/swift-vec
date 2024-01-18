@@ -11,21 +11,26 @@
 //
 //===================================================================================================================================================================================//
 
+//?
+//? Created by LunaticWyrm467 and others.
+//? 
+//? All code is licensed under the MIT license.
+//? Feel free to reproduce, modify, and do whatever.
+//?
+
 //!
-//! Created by LunaticWyrm467
+//! The vector module contains the definitions of the various vector types, such as `Vec2`, `Vec3`, and `Vec4`.
+//! Also contains global traits and functions that are shared between all vector types.
 //!
 
-//?
-//? Contains the Vector trait which is used for all vectors (tuples).
-//?
-
-pub mod v2d;
+mod v2d;
 
 use std::{ ops::{ Add, Sub, Mul, Div, Rem, Neg, AddAssign, SubAssign, MulAssign, DivAssign, RemAssign }, f32::consts::FRAC_PI_2 };
 
 use approx::relative_eq;
 
 use crate::scalar::{ Scalar, FloatScalar, SignedScalar, IntScalar };
+pub use v2d::{ Axis2, Vec2 };
 
 
 /*
@@ -115,8 +120,8 @@ where
     /// Returns the sign of the vector.
     /// For example:
     /// ```rust
-    /// use swift_vec::vector::v2d::Vec2;
-    /// use swift_vec::vector::SignedVector;
+    /// use swift_vec::vector::Vec2;
+    /// use swift_vec::prelude::SignedVector;
     /// 
     /// let sign: Vec2<f32> = Vec2(-1.0, 1.0).signum();
     /// assert_eq!(sign, Vec2(-1f32, 1f32));
@@ -149,7 +154,7 @@ pub trait IntVector<T: IntScalar<T>, V: IntVector<T, V, A>, A>: Vector<T, V, A> 
 pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<T, V, A> {
 
     //=====// Trigonometry //=====//
-    /// Initializes a vector from an angle.
+    /// Initializes a vector from an angle in radians.
     fn from_angle(angle: T) -> V;
 
     /// Calculates the angle of a vector in respect to the positive x-axis.
@@ -353,7 +358,7 @@ pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<
 
     /// Similar to `cubic_interpolate`, but it has additional time parameters `terminal_t`, `pre_start_t`, and `post_terminal_t`.
     /// This can be smoother than `cubic_interpolate` in certain instances.
-    fn cubic_interpolate_in_time(&self, terminal: &V, pre_start: &V, post_terminal: &V, t0: T, terminal_t: &V, pre_start_t: &V, post_terminal_t: &V) -> V;
+    fn cubic_interpolate_in_time(&self, terminal: &V, pre_start: &V, post_terminal: &V, t0: T, terminal_t: T, pre_start_t: T, post_terminal_t: T) -> V;
 
     /// Spherically interpolates between two vectors.
     /// This interpolation is focused on the length or magnitude of the vectors. If the magnitudes are equal,
@@ -450,11 +455,11 @@ pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<
     /// Returns whether this vector is normalized.
     fn is_normalized(&self) -> bool {
         let magnitude: T = self.magnitude();
-        relative_eq!(magnitude, T::one())   // TODO: Figure out type constraints on epsilon.
+        relative_eq!(magnitude, T::one(), epsilon = T::epsilon())
     }
 
     /// Returns if this vector is approximately zero.
-    fn is_zero_approx(&self) -> bool;
-
-
+    fn is_zero_approx(&self) -> bool {
+        self.approx_eq(&Self::zeros_like())
+    }
 }

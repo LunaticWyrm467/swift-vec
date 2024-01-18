@@ -11,13 +11,17 @@
 //
 //===================================================================================================================================================================================//
 
-//!
-//! Created by LunaticWyrm467
-//!
+//?
+//? Created by LunaticWyrm467 and others.
+//? 
+//? All code is licensed under the MIT license.
+//? Feel free to reproduce, modify, and do whatever.
+//?
 
-//?
-//? Contains the implementations for all of the Vector2D types.
-//?
+//!
+//! A private submodule for the vector module that contains all of the implementations
+//! for any of the non-shared behaviours of the 2D vector.
+//!
 
 use super::*;
 use crate::scalar::{ Scalar, SignedScalar };
@@ -35,7 +39,9 @@ pub enum Axis2 {
     Y
 }
 
-
+/// A 2D Vector with an X and Y component.
+/// Contains behaviours and methods for allowing for algebraic, geometric, and trigonometric operations,
+/// as well as interpolation and other common vector operations.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd)]
 pub struct Vec2<T: Scalar>(pub T, pub T);
 
@@ -129,7 +135,7 @@ impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2> for Vec2<T> {
     }
 
     fn angle(&self) -> T {
-        self.x().atan2(self.y())
+        self.y().atan2(self.x())
     }
 
     fn rotated(&self, angle: T) -> Vec2<T> {
@@ -201,10 +207,10 @@ impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2> for Vec2<T> {
         )
     }
 
-    fn cubic_interpolate_in_time(&self, terminal: &Vec2<T>, pre_start: &Vec2<T>, post_terminal: &Vec2<T>, t0: T, terminal_t: &Vec2<T>, pre_start_t: &Vec2<T>, post_terminal_t: &Vec2<T>) -> Vec2<T> {
+    fn cubic_interpolate_in_time(&self, terminal: &Vec2<T>, pre_start: &Vec2<T>, post_terminal: &Vec2<T>, t0: T, terminal_t: T, pre_start_t: T, post_terminal_t: T) -> Vec2<T> {
         Vec2(
-            self.x().cubic_interpolate_in_time(terminal.x(), pre_start.x(), post_terminal.x(), t0, terminal_t.x(), pre_start_t.x(), post_terminal_t.x()),
-            self.y().cubic_interpolate_in_time(terminal.y(), pre_start.y(), post_terminal.y(), t0, terminal_t.y(), pre_start_t.y(), post_terminal_t.y())
+            self.x().cubic_interpolate_in_time(terminal.x(), pre_start.x(), post_terminal.x(), t0, terminal_t, pre_start_t, post_terminal_t),
+            self.y().cubic_interpolate_in_time(terminal.y(), pre_start.y(), post_terminal.y(), t0, terminal_t, pre_start_t, post_terminal_t)
         )
     }
 
@@ -244,12 +250,9 @@ impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2> for Vec2<T> {
         Vec2(self.x().round(), self.y().round())
     }
 
-    fn approx_eq(&self, other: &Vec2<T>) -> bool {   // TODO: Figure out epsilon trait requirements.
-        relative_eq!(self.x(), other.x()) && approx::relative_eq!(self.y(), other.y())
-    }
-
-    fn is_zero_approx(&self) -> bool {   // TODO: Figure out epsilon trait requirements.
-        relative_eq!(self.x(), T::zero()) && approx::relative_eq!(self.y(), T::zero())
+    fn approx_eq(&self, other: &Vec2<T>) -> bool {
+        let eps: T = T::epsilon() * T::from(4).unwrap();
+        relative_eq!(self.x(), other.x(), epsilon = eps) && approx::relative_eq!(self.y(), other.y(), epsilon = eps)
     }
 }
 
@@ -264,6 +267,11 @@ impl <T: Scalar> Vec2<T> {
     pub fn right() -> Vec2<T> {
         Vec2(T::one(), T::zero())
     }
+
+    /// Initializes a vector from a scalar.
+    pub fn of(scalar: T) -> Vec2<T> {
+        Vec2(scalar, scalar)
+    }
     
     /// Gets the x component of the vector.
     pub fn x(&self) -> T {
@@ -276,13 +284,18 @@ impl <T: Scalar> Vec2<T> {
     }
 
     /// Gets the x and y components of this vector in order as a tuple.
-    pub fn xy(&self) -> (T, T) {
+    pub fn raw(&self) -> (T, T) {
         (self.x(), self.y())
     }
 
-    /// Gets the x and y components of this vector in inverse order as a tuple.
-    pub fn yx(&self) -> (T, T) {
-        (self.y(), self.x())
+    /// An alias for the identity function.
+    pub fn xy(&self) -> Vec2<T> {
+        self.identity().to_owned()
+    }
+
+    /// Gets the x and y components of this vector in inverse order as a vector of 2.
+    pub fn yx(&self) -> Vec2<T> {
+        Vec2(self.y(), self.x())
     }
 
     /// Calculates the aspect ratio of this vector.
