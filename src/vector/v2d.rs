@@ -60,6 +60,10 @@ impl <T: Scalar> Vector<T, Vec2<T>, Axis2> for Vec2<T>  {
         }
     }
 
+    fn to_vec(&self) -> Vec<T> {
+        vec![self.x(), self.y()]
+    }
+
     fn identity(&self) -> &Vec2<T> {
         self
     }
@@ -271,6 +275,11 @@ impl <T: Scalar> Vec2<T> {
     /// Initializes a vector from a scalar.
     pub fn of(scalar: T) -> Vec2<T> {
         Vec2(scalar, scalar)
+    }
+
+    /// Converts a vector to a vector of a different type.
+    pub fn cast<U: Scalar>(&self) -> Vec2<U> {
+        Vec2(U::from(self.x()).unwrap(), U::from(self.y()).unwrap())
     }
     
     /// Gets the x component of the vector.

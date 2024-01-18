@@ -1,5 +1,5 @@
 use approx::{RelativeEq, AbsDiffEq};
-use num_traits::{ Num, Signed, Float, FloatConst, PrimInt, FromPrimitive, ToPrimitive };
+use num_traits::{ Num, Signed, Float, FloatConst, PrimInt, NumCast };
 
 
 /*
@@ -9,7 +9,7 @@ use num_traits::{ Num, Signed, Float, FloatConst, PrimInt, FromPrimitive, ToPrim
 
 
 /// Implements common behaviours and additional operations for all primitives.
-pub trait Scalar: Clone + Copy + Num + Default + PartialOrd + std::fmt::Display + std::fmt::Debug + FromPrimitive + ToPrimitive {
+pub trait Scalar: Clone + Copy + Num + Default + PartialOrd + std::fmt::Display + std::fmt::Debug + NumCast {
 
     /// Returns the minimum value of this value and another.
     /// This is implemented manually to not rely on the Ord trait.
@@ -55,8 +55,8 @@ pub trait SignedScalar: Scalar + Signed {
     fn bezier_derivative(self, control_1: Self, control_2: Self, terminal: Self, t: Self) -> Self {
 
         // Define some commonly used constants.
-        let t_3: Self = Self::from_usize(3).unwrap();
-        let t_6: Self = Self::from_usize(6).unwrap();
+        let t_3: Self = Self::from(3).unwrap();
+        let t_6: Self = Self::from(6).unwrap();
 
         // Formula from https://en.wikipedia.org/wiki/Bézier_curve
 		let omt:  Self = Self::one() - t;
@@ -71,7 +71,7 @@ pub trait SignedScalar: Scalar + Signed {
     fn bezier_sample(self, control_1: Self, control_2: Self, terminal: Self, t: Self) -> Self {
 
         // Define some commonly used constants.
-        let t_3: Self = Self::from_usize(3).unwrap();
+        let t_3: Self = Self::from(3).unwrap();
 
         // Formula from https://en.wikipedia.org/wiki/Bézier_curve
         let omt:  Self = Self::one() - t;
@@ -88,11 +88,11 @@ pub trait SignedScalar: Scalar + Signed {
     fn cubic_interpolate(self, terminal: Self, pre_start: Self, post_terminal: Self, t: Self) -> Self {
 
         // Define some commonly used constants.
-        let t_05: Self = Self::from_f32(0.5).unwrap();
-        let t_2:  Self = Self::from_f32(2.0).unwrap();
-        let t_3:  Self = Self::from_f32(3.0).unwrap();
-        let t_4:  Self = Self::from_f32(4.0).unwrap();
-        let t_5:  Self = Self::from_f32(5.0).unwrap();
+        let t_05: Self = Self::from(0.5).unwrap();
+        let t_2:  Self = Self::from(2.0).unwrap();
+        let t_3:  Self = Self::from(3.0).unwrap();
+        let t_4:  Self = Self::from(4.0).unwrap();
+        let t_5:  Self = Self::from(5.0).unwrap();
         
         // Derived from https://github.com/godotengine/godot/blob/1952f64b07b2a0d63d5ba66902fd88190b0dcf08/core/math/math_funcs.h#L275
         t_05 * (
@@ -109,7 +109,7 @@ pub trait SignedScalar: Scalar + Signed {
 
         // Define some commonly used constants.
         let t_0:  Self = Self::zero();
-        let t_05: Self = Self::from_f32(0.5).unwrap();
+        let t_05: Self = Self::from(0.5).unwrap();
         let t_1:  Self = Self::one();
         
         // Formula of the Barry-Goldman method.
@@ -138,7 +138,7 @@ pub trait IntUnique<T: IntScalar<T>> {
 */
 
 
-impl <T: Clone + Copy + Num + Default + PartialOrd + std::fmt::Display + std::fmt::Debug + FromPrimitive + ToPrimitive> Scalar for T {}
+impl <T: Clone + Copy + Num + Default + PartialOrd + std::fmt::Display + std::fmt::Debug + NumCast> Scalar for T {}
 impl <T: Scalar + Ord + PrimInt + IntUnique<T>> IntScalar<T> for T {}
 impl <T: Scalar + Signed> SignedScalar for T {}
 impl <T: SignedScalar + Float + FloatConst + RelativeEq + AbsDiffEq<Epsilon = Self>> FloatScalar for T {}

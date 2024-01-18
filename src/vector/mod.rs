@@ -55,6 +55,9 @@ pub trait Vector<T: Scalar, V: Vector<T, V, A>, A>: VectorAbstract<T, V> {
     /// Gets the value at the specified axis.
     fn get(&self, axis: A) -> T;
 
+    /// Converts the vector into a `Vec<T>`.
+    fn to_vec(&self) -> Vec<T>;
+
     /// A simple identity function. Useful for trait implementations where trait bounds need to be kept.
     fn identity(&self) -> &V;
 
@@ -77,7 +80,7 @@ pub trait Vector<T: Scalar, V: Vector<T, V, A>, A>: VectorAbstract<T, V> {
 
     /// Calculates the average of the vector.
     fn average(&self) -> T {
-        self.sum() / T::from_usize(Self::rank()).unwrap()
+        self.sum() / T::from(Self::rank()).unwrap()
     }
 
     /// Returns the axis of the highest value.

@@ -30,6 +30,6 @@ pub mod vector;
 /// Generally speaking, you'll want to use the prelude module to get all of the traits and functions you'll need.
 /// This does not include any of the individual types. If you want those, import from the `vector` and `scalar` modules.
 pub mod prelude {
-    pub use crate::vector::{ IntVector, SignedVector, FloatVector };
-    pub use crate::scalar::{ IntScalar, SignedScalar, FloatScalar };
+    pub use crate::vector::{ Vector, IntVector, SignedVector, FloatVector };
+    pub use crate::scalar::{ Scalar, IntScalar, SignedScalar, FloatScalar };
 }
