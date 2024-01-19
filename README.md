@@ -17,9 +17,22 @@ or add `swift_vec = X.X` to your `cargo.toml` file.
 To show off some basic functionality of what this crate allows for;
 ```rust
 use swift_vec::prelude::*;
-use swift_vec::vector::Vec2;
+use swift_vec::vector::{ Vec2, Axis2 };
 
 fn main() {
+
+    // Supports tuple destructuring and field indexing.
+    let Vec2(x, y): Vec2<i32> = Vec2(1, 0);
+    match Vec2(x, y) {
+        Vec2( 0,  1) => println!("Up"),
+        Vec2( 0, -1) => println!("Down"),
+        Vec2(-1,  0) => println!("Left"),
+        Vec2( 1,  0) => println!("Right"),
+        _            => println!("Other")
+    }
+
+    let argmax_axis: Axis2 = Vec2(1, 0).argmax();
+    assert_eq!(argmax_axis, Axis2::X);
 
     // Vectors support all primitive numerical types.
     let vec_i32:   Vec2<i32>   = Vec2::ones_like();
