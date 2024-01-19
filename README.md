@@ -1,5 +1,5 @@
 # SwiftVec
-![GitHub License](https://img.shields.io/github/license/LunaticWyrm467/SwiftVec)
+![Crates.io License](https://img.shields.io/crates/l/swift_vec?color=green)
 [![Crates.io Version](https://img.shields.io/crates/v/swift_vec)](https://crates.io/crates/swift_vec)
 [![Documentation](https://docs.rs/swift_vec/badge.svg)](https://docs.rs/swift_vec)
 
