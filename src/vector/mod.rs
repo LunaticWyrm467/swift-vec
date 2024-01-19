@@ -157,26 +157,11 @@ pub trait IntVector<T: IntScalar<T>, V: IntVector<T, V, A>, A>: Vector<T, V, A> 
 pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<T, V, A> {
 
     //=====// Trigonometry //=====//
-    /// Initializes a vector from an angle in radians.
-    fn from_angle(angle: T) -> V;
-
-    /// Calculates the angle of a vector in respect to the positive x-axis.
-    /// # Returns
-    /// The angle of the vector in radians.
-    fn angle(&self) -> T;
-
     /// Calculates the angle to another vector.
     /// # Returns
     /// The angle in radians.
     fn angle_to(&self, other: &V) -> T {
         -(self.cross(&other)).atan2(self.dot(&other))
-    }
-
-    /// Calculates the angle between the line connecting the two positions and the x-axis.
-    /// # Returns
-    /// The angle in radians.
-    fn angle_between(&self, other: &V) -> T {
-        (other.to_owned() - self.identity().to_owned()).angle()
     }
 
     /// Rotates this vector by a given angle in radians.

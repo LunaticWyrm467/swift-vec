@@ -32,7 +32,7 @@ use crate::scalar::{ Scalar, SignedScalar };
         Implementation
 */
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Axis2 {
     None,
     X,
@@ -134,13 +134,7 @@ impl <T: IntScalar<T>> IntVector<T, Vec2<T>, Axis2> for Vec2<T> {
 }
 
 impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2> for Vec2<T> {
-    fn from_angle(angle: T) -> Vec2<T> {
-        Vec2(angle.cos(), angle.sin())
-    }
-
-    fn angle(&self) -> T {
-        self.y().atan2(self.x())
-    }
+    
 
     fn rotated(&self, angle: T) -> Vec2<T> {
         
@@ -310,7 +304,7 @@ impl <T: Scalar> Vec2<T> {
     /// Calculates the aspect ratio of this vector.
     pub fn aspect_ratio(&self) -> T {
         self.x() / self.y()
-    }
+    }    
 }
 
 impl <T: SignedScalar> Vec2<T> {
@@ -323,6 +317,28 @@ impl <T: SignedScalar> Vec2<T> {
     /// Initializes a vector that describes a leftwards direction.
     pub fn left() -> Vec2<T> {
         Vec2(-T::one(), T::zero())
+    }
+}
+
+impl <T: FloatScalar> Vec2<T> {
+
+    /// Initializes a vector from an angle in radians.
+    pub fn from_angle(angle: T) -> Vec2<T> {
+        Vec2(angle.cos(), angle.sin())
+    }
+
+    /// Calculates the angle of a vector in respect to the positive x-axis.
+    /// # Returns
+    /// The angle of the vector in radians.
+    pub fn angle(&self) -> T {
+        self.y().atan2(self.x())
+    }
+
+    /// Calculates the angle between the line connecting the two positions `self` and `other` and the x-axis.
+    /// # Returns
+    /// The angle in radians.
+    pub fn angle_between(&self, other: &Vec2<T>) -> T {
+        (other - self).angle()
     }
 }
 

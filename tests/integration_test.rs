@@ -106,8 +106,12 @@ fn vec2_global() {
         _            => println!("Other")
     }
 
-    let argmax_axis: Axis2 = Vec2(1, 0).argmax();
+    let test_vec:    Vec2<i32> = Vec2(1, 0);
+    let argmax_axis: Axis2     = test_vec.argmax();
+    let argmax_val:  i32       = test_vec.get(argmax_axis);
+
     assert_eq!(argmax_axis, Axis2::X);
+    assert_eq!(argmax_val, 1);
 
     // Vectors support all primitive numerical types.
     let vec_i32:   Vec2<i32>   = Vec2::ones_like();
