@@ -1,4 +1,4 @@
-use approx::{RelativeEq, AbsDiffEq};
+use approx::{ RelativeEq, AbsDiffEq };
 use num_traits::{ Num, Signed, Float, FloatConst, PrimInt, NumCast };
 
 

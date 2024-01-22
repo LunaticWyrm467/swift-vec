@@ -42,25 +42,14 @@ pub use v2d::{ Axis2, Vec2 };
 pub trait VectorAbstract<T: Scalar, V: VectorAbstract<T, V>>
 where
     Self:
-        Clone + PartialEq + PartialOrd + Default + Add + Sub + Mul + Div + Rem + AddAssign + SubAssign + MulAssign + DivAssign + RemAssign + std::fmt::Display + std::fmt::Debug +
+        Clone + PartialEq + PartialOrd + Default + std::fmt::Display + std::fmt::Debug + Add + Sub + Mul + Div + Rem + AddAssign + SubAssign + MulAssign + DivAssign + RemAssign +
         Add<Output = V> + Sub<Output = V> + Mul<Output = V> + Div<Output = V> + Rem<Output = V> +
         Add<T, Output = V> + Sub<T, Output = V> + Mul<T, Output = V> + Div<T, Output = V> + Rem<T, Output = V>
 {}
 
 pub trait Vector<T: Scalar, V: Vector<T, V, A>, A>: VectorAbstract<T, V> {
 
-    /// Returns the rank or dimension of the vector.
-    fn rank() -> usize;
-
-    /// Gets the value at the specified axis.
-    fn get(&self, axis: A) -> T;
-
-    /// Converts the vector into a `Vec<T>`.
-    fn to_vec(&self) -> Vec<T>;
-
-    /// A simple identity function. Useful for trait implementations where trait bounds need to be kept.
-    fn identity(&self) -> &V;
-
+    //=====// Constructors //=====//
     /// Returns a vector containing zeros.
     fn ones_like() -> V;
     
@@ -72,6 +61,22 @@ pub trait Vector<T: Scalar, V: Vector<T, V, A>, A>: VectorAbstract<T, V> {
         Self::ones_like() * x
     }
 
+
+    //=====// Getters //=====//
+    /// A simple identity function. Useful for trait implementations where trait bounds need to be kept.
+    fn identity(&self) -> &V;
+
+    /// Returns the rank or dimension of the vector.
+    fn rank() -> usize;
+
+    /// Gets the value at the specified axis.
+    fn get(&self, axis: A) -> T;
+
+    /// Converts the vector into a `Vec<T>`.
+    fn to_vec(&self) -> Vec<T>;
+
+
+    //=====// Operations //=====//
     /// Calculates the sum of the vector.
     fn sum(&self) -> T;
 
@@ -281,6 +286,11 @@ pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<
         self.identity().to_owned() - (normals_normalized * alignment * T::from(2).unwrap())
     }
 
+    /// An alias for the `reflect()` function.
+    fn bounce(&self, normal: &V) -> V {
+        self.reflect(normal)
+    }
+
     /// Computes the refraction of this vector about the given normal vector and a refraction index.
     fn refract(&self, normal: &V, refraction_index: T) -> V {
         
@@ -438,6 +448,11 @@ pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<
     /// Returns whether this vector is finite.
     fn is_finite(&self) -> bool {
         self.sum().is_finite()   // If either of the components is not finite, then the whole sum will be NaN or infinite.
+    }
+
+    /// Returns whether this vector contains a NaN value.
+    fn is_nan(&self) -> bool {
+        self.sum().is_nan()
     }
 
     /// Returns whether this vector is normalized.

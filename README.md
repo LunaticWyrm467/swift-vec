@@ -72,6 +72,58 @@ fn main() {
 }
 ```
 
+We also provide functionality for rectangles and their associated geometric functions;
+```rust
+use swift_vec::prelude::*;
+use swift_vec::vector::{ Vec2, Axis2 };
+use swift_vec::rect::{ Rect2, Side2 };
+
+fn main() {
+
+    // Just like vectors, rectangles can be destructured and indexed.
+    let Rect2(position, dimensions): Rect2<i32> = Rect2(Vec2(1, 1), Vec2(3, 6));
+    let rect:                        Rect2<i32> = Rect2(position, dimensions);
+
+    let longest_axis:   Axis2 = rect.longest_axis();
+    let longest_length: i32   = rect.longest_axis_length();
+
+    assert_eq!(longest_axis,   Axis2::Y);
+    assert_eq!(longest_length, 6);
+
+    // There are checks in place for determining whether rectangles intersect, and to allow for the
+    // computation of their cross-section.
+    let rect_a: Rect2<f32> = Rect2::from_offsets(-5.0, -5.0, 5.0, 5.0);
+    let rect_b: Rect2<f32> = Rect2::from_components(-10.0, -10.0, 7.5, 7.5);
+
+    assert_eq!(rect_a.intersects(&rect_b, false), true);   // `include_borders` is set to false - not that it matters here.
+    assert_eq!(rect_a.intersection(&rect_b).unwrap(), Rect2(Vec2(-5.0, -5.0), Vec2(2.5, 2.5)));
+
+    let smaller_rect: Rect2<isize> = Rect2::unit();
+    let bigger_rect:  Rect2<i64>   = Rect2(Vec2(-32, -32), Vec2(64, 64));
+
+    assert_eq!(bigger_rect.encompasses(&smaller_rect.cast()), true);   // Casting is supported.
+    assert_eq!(smaller_rect.encompasses(&bigger_rect.cast()), false);
+
+    // Rectangles can be checked to see if they contain a point.
+    let platform: Rect2<i16> = Rect2(Vec2(0, 0), Vec2(100, 100));
+    let point:    Vec2<i16>  = Vec2(50, 50);
+
+    assert_eq!(platform.encompasses_point(point), true);
+
+    // Rectangles can be merged and their shape can be manipulated.
+    let rect_a: Rect2<i32> = Rect2::from_components(-3, -3, 3, 3);
+    let rect_b: Rect2<i32> = Rect2::from_components(3, 3, 3, 3);
+    let merged: Rect2<i32> = rect_a.merge(&rect_b);
+    
+    assert_eq!(merged, Rect2(Vec2(-3, -3), Vec2(9, 9)));
+
+    let base_rect: Rect2<i32> = Rect2::unit();
+    let mod_rect:  Rect2<i32> = base_rect.grow_side(Side2::Top, 5);
+
+    assert_eq!(mod_rect, Rect2(Vec2(0, -5), Vec2(1, 6)));
+}
+```
+
 ## Features
 - ℹ️ Simple yet intuitive syntax. No messy constructors!
 - ➕ Standard vector arithmetic and operations.

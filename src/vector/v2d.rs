@@ -32,11 +32,25 @@ use crate::scalar::{ Scalar, SignedScalar };
         Implementation
 */
 
+
+/// Simply represents an axis of a 2-dimensional graph or plane.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Axis2 {
     None,
     X,
     Y
+}
+
+impl Axis2 {
+
+    /// Gets a normalized `Vec2` representing this axis.
+    pub fn to_vec2<T: Scalar>(&self) -> Vec2<T> {
+        match self {
+            Axis2::X    => Vec2(T::one(),  T::zero()),
+            Axis2::Y    => Vec2(T::zero(), T::one() ),
+            Axis2::None => Vec2(T::zero(), T::zero())
+        }
+    }
 }
 
 /// A 2D Vector with an X and Y component.
@@ -48,6 +62,18 @@ pub struct Vec2<T: Scalar>(pub T, pub T);
 impl <T: Scalar> VectorAbstract<T, Vec2<T>> for Vec2<T> {}
 
 impl <T: Scalar> Vector<T, Vec2<T>, Axis2> for Vec2<T>  {
+    fn ones_like() -> Vec2<T> {
+        Vec2(T::one(), T::one())
+    }
+
+    fn zeros_like() -> Vec2<T> {
+        Vec2(T::zero(), T::zero())
+    }
+
+    fn identity(&self) -> &Vec2<T> {
+        self
+    }
+
     fn rank() -> usize {
         2
     }
@@ -62,18 +88,6 @@ impl <T: Scalar> Vector<T, Vec2<T>, Axis2> for Vec2<T>  {
 
     fn to_vec(&self) -> Vec<T> {
         vec![self.x(), self.y()]
-    }
-
-    fn identity(&self) -> &Vec2<T> {
-        self
-    }
-
-    fn ones_like() -> Vec2<T> {
-        Vec2(T::one(), T::one())
-    }
-
-    fn zeros_like() -> Vec2<T> {
-        Vec2(T::zero(), T::zero())
     }
 
     fn sum(&self) -> T {
@@ -134,8 +148,6 @@ impl <T: IntScalar<T>> IntVector<T, Vec2<T>, Axis2> for Vec2<T> {
 }
 
 impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2> for Vec2<T> {
-    
-
     fn rotated(&self, angle: T) -> Vec2<T> {
         
         // Compute the sine and cosine of the angle.
@@ -256,39 +268,60 @@ impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2> for Vec2<T> {
 
 impl <T: Scalar> Vec2<T> {
     
-    /// Initializes a vector that describes an upwards direction.
+    /// Initializes a `Vec2` that describes an upwards direction.
     pub fn up() -> Vec2<T> {
         Vec2(T::zero(), T::one())
     }
     
-    /// Initializes a vector that describes a rightwards direction.
+    /// Initializes a `Vec2` that describes a rightwards direction.
     pub fn right() -> Vec2<T> {
         Vec2(T::one(), T::zero())
     }
 
-    /// Initializes a vector from a scalar.
+    /// Initializes a `Vec2` that describes a plotted point along the x axis.
+    pub fn on_x(x: T) -> Vec2<T> {
+        Vec2(x, T::zero())
+    }
+
+    /// Initializes a `Vec2` that describes a plotted point along the y axis.
+    pub fn on_y(y: T) -> Vec2<T> {
+        Vec2(T::zero(), y)
+    }
+
+    /// Initializes a `Vec2` from a scalar.
     pub fn of(scalar: T) -> Vec2<T> {
         Vec2(scalar, scalar)
     }
 
-    /// Converts a vector to a vector of a different type.
+    /// Converts a tuple to a `Vec2`.
+    pub fn from_tuple(tuple: (T, T)) -> Vec2<T> {
+        Vec2(tuple.0, tuple.1)
+    }
+
+    /// Converts a `Vec2` to a `Vec2` of a different type.
     pub fn cast<U: Scalar>(&self) -> Vec2<U> {
-        Vec2(U::from(self.x()).unwrap(), U::from(self.y()).unwrap())
+        let err: &str = "Could not cast to type! Check if the value is negative and is being cast to unsigned type!";
+        Vec2(U::from(self.x()).expect(err), U::from(self.y()).expect(err))
+    }
+
+    /// Returns a `Vec2` that represents this `Vec2`'s X component.
+    pub fn of_x(&self) -> Vec2<T> {
+        Vec2(self.x(), T::zero())
+    }
+
+    /// Returns a `Vec2` that represents this `Vec2`'s Y component.
+    pub fn of_y(&self) -> Vec2<T> {
+        Vec2(T::zero(), self.y())
     }
     
-    /// Gets the x component of the vector.
+    /// Gets the x component of the `Vec2`.
     pub fn x(&self) -> T {
         self.0
     }
 
-    /// Gets the y component of the vector.
+    /// Gets the y component of the `Vec2`.
     pub fn y(&self) -> T {
         self.1
-    }
-
-    /// Gets the x and y components of this vector in order as a tuple.
-    pub fn raw(&self) -> (T, T) {
-        (self.x(), self.y())
     }
 
     /// An alias for the identity function.
@@ -296,12 +329,57 @@ impl <T: Scalar> Vec2<T> {
         self.identity().to_owned()
     }
 
-    /// Gets the x and y components of this vector in inverse order as a vector of 2.
+    /// Gets the x and y components of this `Vec2` in inverse order as a `Vec2` of 2.
     pub fn yx(&self) -> Vec2<T> {
         Vec2(self.y(), self.x())
     }
 
-    /// Calculates the aspect ratio of this vector.
+    /// Gets the mutable x component of the `Vec2`.
+    pub fn x_mut(&mut self) -> &mut T {
+        &mut self.0
+    }
+
+    /// Gets the mutable y component of the `Vec2`.
+    pub fn y_mut(&mut self) -> &mut T {
+        &mut self.1
+    }
+
+    /// Gets a tuple of mutable references for the x and y components of this `Vec2`.
+    pub fn xy_mut(&mut self) -> (&mut T, &mut T) {
+        (&mut self.0, &mut self.1)
+    }
+
+    /// Gets a tuple of the mutable references for the x and y components of this `Vec2` in inverse order.
+    pub fn yx_mut(&mut self) -> (&mut T, &mut T) {
+        (&mut self.1, &mut self.0)
+    }
+
+    /// Sets the x component of the `Vec2`.
+    pub fn set_x(&mut self, x: T) {
+        self.0 = x;
+    }
+
+    /// Sets the y component of the `Vec2`.
+    pub fn set_y(&mut self, y: T) {
+        self.1 = y;
+    }
+
+    /// Sets the x and y components of this `Vec2` - overwriting the previous values.
+    pub fn set_xy(&mut self, xy: Vec2<T>) {
+        *self = xy;
+    }
+
+    /// Sets the x and y components of this `Vec2` - overwriting the previous values.
+    pub fn set_yx(&mut self, xy: Vec2<T>) {
+        *self = xy.yx();
+    }
+
+    /// Gets the x and y components of this `Vec2` in order as a tuple.
+    pub fn raw(&self) -> (T, T) {
+        (self.x(), self.y())
+    }
+
+    /// Calculates the aspect ratio of this `Vec2`.
     pub fn aspect_ratio(&self) -> T {
         self.x() / self.y()
     }    
@@ -309,12 +387,12 @@ impl <T: Scalar> Vec2<T> {
 
 impl <T: SignedScalar> Vec2<T> {
 
-    /// Initializes a vector that describes a downwards direction.
+    /// Initializes a `Vec2` that describes a downwards direction.
     pub fn down() -> Vec2<T> {
         Vec2(T::zero(), -T::one())
     }
 
-    /// Initializes a vector that describes a leftwards direction.
+    /// Initializes a `Vec2` that describes a leftwards direction.
     pub fn left() -> Vec2<T> {
         Vec2(-T::one(), T::zero())
     }
@@ -322,14 +400,14 @@ impl <T: SignedScalar> Vec2<T> {
 
 impl <T: FloatScalar> Vec2<T> {
 
-    /// Initializes a vector from an angle in radians.
+    /// Initializes a `Vec2` from an angle in radians.
     pub fn from_angle(angle: T) -> Vec2<T> {
         Vec2(angle.cos(), angle.sin())
     }
 
-    /// Calculates the angle of a vector in respect to the positive x-axis.
+    /// Calculates the angle of a `Vec2` in respect to the positive x-axis.
     /// # Returns
-    /// The angle of the vector in radians.
+    /// The angle of the `Vec2` in radians.
     pub fn angle(&self) -> T {
         self.y().atan2(self.x())
     }
@@ -602,6 +680,13 @@ impl <T: Scalar> RemAssign for Vec2<T> {
         *self = self.to_owned() % other;
     }
 }
+
+
+/*
+    Global
+        Behaviours
+*/
+
 
 impl <T: Scalar> Default for Vec2<T> {
     fn default() -> Self {
