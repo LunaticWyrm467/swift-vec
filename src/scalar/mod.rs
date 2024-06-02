@@ -1,3 +1,5 @@
+use core::fmt::{ Display, Debug };
+
 use approx::{ RelativeEq, AbsDiffEq };
 use num_traits::{ Num, Signed, Float, FloatConst, PrimInt, NumCast };
 
@@ -9,7 +11,7 @@ use num_traits::{ Num, Signed, Float, FloatConst, PrimInt, NumCast };
 
 
 /// Implements common behaviours and additional operations for all primitives.
-pub trait Scalar: Clone + Copy + Num + Default + PartialOrd + std::fmt::Display + std::fmt::Debug + NumCast {
+pub trait Scalar: Clone + Copy + Num + Default + PartialOrd + Display + Debug + NumCast {
 
     /// Returns the minimum value of this value and another.
     /// This is implemented manually to not rely on the Ord trait.
@@ -138,7 +140,7 @@ pub trait IntUnique<T: IntScalar<T>> {
 */
 
 
-impl <T: Clone + Copy + Num + Default + PartialOrd + std::fmt::Display + std::fmt::Debug + NumCast> Scalar for T {}
+impl <T: Clone + Copy + Num + Default + PartialOrd + Display + Debug + NumCast> Scalar for T {}
 impl <T: Scalar + Ord + PrimInt + IntUnique<T>> IntScalar<T> for T {}
 impl <T: Scalar + Signed> SignedScalar for T {}
 impl <T: SignedScalar + Float + FloatConst + RelativeEq + AbsDiffEq<Epsilon = Self>> FloatScalar for T {}

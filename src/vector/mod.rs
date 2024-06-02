@@ -25,7 +25,14 @@
 
 mod v2d;
 
-use std::{ ops::{ Add, Sub, Mul, Div, Rem, Neg, AddAssign, SubAssign, MulAssign, DivAssign, RemAssign }, f32::consts::FRAC_PI_2 };
+use core::{
+    ops::{ Add, Sub, Mul, Div, Rem, Neg, AddAssign, SubAssign, MulAssign, DivAssign, RemAssign },
+    f32::consts::FRAC_PI_2,
+    fmt::{ Debug, Display }
+};
+
+#[cfg(feature = "alloc")]
+use alloc::{ vec::Vec, vec };
 
 use approx::relative_eq;
 
@@ -39,32 +46,21 @@ pub use v2d::{ Axis2, Vec2 };
 */
 
 
-pub trait VectorAbstract<T: Scalar, V: VectorAbstract<T, V>>
+pub trait VectorAbstract<T: Scalar + Vectorized<T, V>, V: VectorAbstract<T, V>>
 where
     Self:
-        Clone + PartialEq + PartialOrd + Default + std::fmt::Display + std::fmt::Debug + Add + Sub + Mul + Div + Rem + AddAssign + SubAssign + MulAssign + DivAssign + RemAssign +
+        Vectorized<T, V> +
+        Clone + Copy + PartialEq + PartialOrd + Default + Display + Debug +
+        Add + Sub + Mul + Div + Rem + AddAssign + SubAssign + MulAssign + DivAssign + RemAssign +
         Add<Output = V> + Sub<Output = V> + Mul<Output = V> + Div<Output = V> + Rem<Output = V> +
         Add<T, Output = V> + Sub<T, Output = V> + Mul<T, Output = V> + Div<T, Output = V> + Rem<T, Output = V>
 {}
 
-pub trait Vector<T: Scalar, V: Vector<T, V, A>, A>: VectorAbstract<T, V> {
-
-    //=====// Constructors //=====//
-    /// Returns a vector containing zeros.
-    fn ones_like() -> V;
-    
-    /// Returns a vector containing ones.
-    fn zeros_like() -> V;
-
-    /// Returns a vector encompassing a scalar value.
-    fn scalar_like(x: T) -> V {
-        Self::ones_like() * x
-    }
-
+pub trait Vector<T: Scalar + Vectorized<T, V>, V: Vector<T, V, A>, A>: VectorAbstract<T, V> {
 
     //=====// Getters //=====//
     /// A simple identity function. Useful for trait implementations where trait bounds need to be kept.
-    fn identity(&self) -> &V;
+    fn identity(&self) -> V;
 
     /// Returns the rank or dimension of the vector.
     fn rank() -> usize;
@@ -73,6 +69,7 @@ pub trait Vector<T: Scalar, V: Vector<T, V, A>, A>: VectorAbstract<T, V> {
     fn get(&self, axis: A) -> T;
 
     /// Converts the vector into a `Vec<T>`.
+    #[cfg(feature = "alloc")]
     fn to_vec(&self) -> Vec<T>;
 
 
@@ -94,34 +91,17 @@ pub trait Vector<T: Scalar, V: Vector<T, V, A>, A>: VectorAbstract<T, V> {
     /// Returns the axis of the lowest value.
     fn argmin(&self) -> A;
 
-    /// Returns the maximum between this vector and another.
-    fn v_max(&self, other: &V) -> V;
+    /// Returns the maximum between this vector and another value.
+    fn max<I: Vectorized<T, V>>(&self, other: I) -> V;
 
-    /// Returns the maximum between this vector and a scalar threshold.
-    fn max(&self, threshold: T) -> V {
-        self.v_max(&Self::scalar_like(threshold))
-    }
+    /// Returns the minimum between this vector and another value.
+    fn min<I: Vectorized<T, V>>(&self, other: I) -> V;
 
-    /// Returns the minimum between this vector and another.
-    fn v_min(&self, other: &V) -> V;
-
-    /// Returns the minimum between this vector and a scalar threshold.
-    fn min(&self, threshold: T) -> V {
-        self.v_min(&Self::scalar_like(threshold))
-    }
-
-    /// Clamps this vector between a minimum and maximum vector and returns the result.
-    fn v_clamp(&self, min: &V, max: &V) -> V {
-        self.v_min(max).v_max(min)
-    }
-
-    /// Clamps this vector between a minimum and maximum scalar threshold and returns the result.
-    fn clamp(&self, min: T, max: T) -> V {
-        self.min(max).max(min)
-    }
+    /// Clamps this vector between a minimum and maximum value and returns the result.
+    fn clamp<I: Vectorized<T, V>>(&self, min: I, max: I) -> V;
 }
 
-pub trait SignedVector<T: SignedScalar, V: SignedVector<T, V, A>, A>: Vector<T, V, A>
+pub trait SignedVector<T: SignedScalar + Vectorized<T, V>, V: SignedVector<T, V, A>, A>: Vector<T, V, A>
 where
     Self: Neg<Output = V> {
 
@@ -140,33 +120,23 @@ where
     fn abs(&self) -> V;
 }
 
-pub trait IntVector<T: IntScalar<T>, V: IntVector<T, V, A>, A>: Vector<T, V, A> {
-
-    /// Raises the vector by a certain power vector.
-    fn v_pow(&self, pow: &V) -> V;
+pub trait IntVector<T: IntScalar<T> + Vectorized<T, V>, V: IntVector<T, V, A>, A>: Vector<T, V, A> {
 
     /// Raises the vector by a certain power.
-    fn pow(&self, pow: T) -> V {
-        self.v_pow(&Self::scalar_like(pow))
-    }
-
-    /// Derives the log of a vector using a base vector.
-    fn v_log(&self, base: &V) -> V;
+    fn pow<I: Vectorized<T, V>>(&self, pow: I) -> V;
 
     /// Derives the log of the vector using a base.
-    fn log(&self, base: T) -> V {
-        self.v_log(&Self::scalar_like(base))
-    }
+    fn log<I: Vectorized<T, V>>(&self, base: I) -> V;
 }
 
-pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<T, V, A> {
+pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>, A>: SignedVector<T, V, A> {
 
     //=====// Trigonometry //=====//
     /// Calculates the angle to another vector.
     /// # Returns
     /// The angle in radians.
-    fn angle_to(&self, other: &V) -> T {
-        -(self.cross(&other)).atan2(self.dot(&other))
+    fn angle_to(&self, other: V) -> T {
+        -(self.cross(other)).atan2(self.dot(other))
     }
 
     /// Rotates this vector by a given angle in radians.
@@ -203,32 +173,32 @@ pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<
 
     /// Calculates the cosecant of this vector.
     fn csc(&self) -> V {
-        Self::ones_like() / self.sin()
+        T::one().dvec() / self.sin()
     }
 
     /// Calculates the secant of this vector.
     fn sec(&self) -> V {
-        Self::ones_like() / self.cos()
+        T::one().dvec() / self.cos()
     }
 
     /// Calculates the cotangent of this vector.
     fn cot(&self) -> V {
-        Self::ones_like() / self.tan()
+        T::one().dvec() / self.tan()
     }
 
     /// Calculates the arc cosecant of this vector.
     fn acsc(&self) -> V {
-        (Self::ones_like() / self.identity().to_owned()).asin()
+        (T::one().dvec() / self.identity()).asin()
     }
 
     /// Calculates the arc secant of this vector.
     fn asec(&self) -> V {
-        (Self::ones_like() / self.identity().to_owned()).acos()
+        (T::one().dvec() / self.identity()).acos()
     }
 
     /// Calculates the arc cotangent of this vector.
     fn acot(&self) -> V {
-        (Self::ones_like() / self.identity().to_owned()).atan()
+        (T::one().dvec() / self.identity()).atan()
     }
 
 
@@ -255,17 +225,17 @@ pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<
         
         // If the magnitude is less than or equal to the limit, return the vector.
         if self.magnitude() <= limit {
-            return self.identity().to_owned();
+            return self.identity();
         }
 
         // Otherwise, calculate the scale factor and multiply the vector by it.
         let scale: T = limit / self.magnitude();
-        self.identity().to_owned() * scale
+        self.identity() * scale
     }
 
     /// Normalizes the vector to a length of 1.
     fn normalized(&self) -> V {
-        self.identity().to_owned() / self.magnitude()
+        self.identity() / self.magnitude()
     }
 
     /// Derives the unit vector from this vector.
@@ -275,113 +245,113 @@ pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<
     }
 
     /// Computes the reflection of this vector about the given normal vector.
-    fn reflect(&self, normal: &V) -> V {
+    fn reflect(&self, normal: V) -> V {
         
         // Normalize the normals and calculate the dot product between this vector and the normals
         // to determine the alignment.
         let normals_normalized: V = normal.normalized();
-        let alignment:          T = self.dot(&normals_normalized);
+        let alignment:          T = self.dot(normals_normalized);
 
         // Compute and return the reflection.
-        self.identity().to_owned() - (normals_normalized * alignment * T::from(2).unwrap())
+        self.identity() - (normals_normalized * alignment * T::from(2).unwrap())
     }
 
     /// An alias for the `reflect()` function.
-    fn bounce(&self, normal: &V) -> V {
+    fn bounce(&self, normal: V) -> V {
         self.reflect(normal)
     }
 
     /// Computes the refraction of this vector about the given normal vector and a refraction index.
-    fn refract(&self, normal: &V, refraction_index: T) -> V {
+    fn refract(&self, normal: V, refraction_index: T) -> V {
         
         // Normalize the normals and calculate the dot product between this vector and the normals
         // to determine the alignment.
         let normals_normalized: V = normal.normalized();
-        let alignment:          T = self.dot(&normals_normalized);
+        let alignment:          T = self.dot(normals_normalized);
 
         // Compute the discriminant - the 'k' in Snell's law.
         let discriminant: T = T::one() - refraction_index * refraction_index * (T::one() - alignment * alignment);
 
         // If the discriminant is negative, then an internal reflection occurred.
         if discriminant < T::zero() {
-            Self::zeros_like()
+            T::zero().dvec()
         } else {
 
             // Otherwise, compute and return the refraction using Snell's law.
-            (self.identity().to_owned() * refraction_index) - (normals_normalized * (refraction_index * alignment + discriminant.sqrt()))
+            (self.identity() * refraction_index) - (normals_normalized * (refraction_index * alignment + discriminant.sqrt()))
         }
     }
 
     /// Calculates the direction from this vector to another.
-    fn direction_to(&self, other: &V) -> V {
-        (other.to_owned() - self.identity().to_owned()).normalized()
+    fn direction_to(&self, other: V) -> V {
+        (other - self.identity()).normalized()
     }
 
     /// Computes the squared distance between two vectors.
     /// This is faster than `distance_to()` because it avoids a square root.
-    fn distance_squared_to(&self, other: &V) -> T;
+    fn distance_squared_to(&self, other: V) -> T;
 
     /// Computes the distance between two vectors using the pythagorean theorem.
-    fn distance_to(&self, other: &V) -> T {
+    fn distance_to(&self, other: V) -> T {
         self.distance_squared_to(other).sqrt()
     }
 
     /// Moves towards a target vector by a delta value.
     /// Does not exceed or pass the target vector.
-    fn move_towards(&self, target: &V, delta: T) -> V {
+    fn move_towards(&self, target: V, delta: T) -> V {
         let direction: V = self.direction_to(target);
-        let position:  V = self.identity().to_owned() + (direction * delta);
-        position.v_min(target)
+        let position:  V = self.identity() + (direction * delta);
+        position.min(target)
     }
 
 
     //=====// Interpolation //=====//
     /// A simple linear interpolation between two vectors sampled at point `t`.
-    fn lerp(&self, other: &V, t: T) -> V {
-        let identity: &V = self.identity();
-        identity.to_owned() + (other.to_owned() - identity.to_owned()) * t
+    fn lerp(&self, other: V, t: T) -> V {
+        let identity: V = self.identity();
+        identity + (other - identity) * t
     }
 
     /// Calculates the derivative of the Bézier curve set by this vector and the given control and terminal points
     /// at position `t`.
-    fn bezier_derivative(&self, control_1: &V, control_2: &V, terminal: &V, t: T) -> V;
+    fn bezier_derivative(&self, control_1: V, control_2: V, terminal: V, t: T) -> V;
 
     /// Calculates the point on the Bézier curve set by this vector and the given control and terminal points
     /// at position `t`.
-    fn bezier_sample(&self, control_1: &V, control_2: &V, terminal: &V, t: T) -> V;
+    fn bezier_sample(&self, control_1: V, control_2: V, terminal: V, t: T) -> V;
 
     /// Calculates and samples the cubic interpolation between this vector and another
     /// given `pre_start` and `post_terminal` vectors as handles, and a given `t` value.
-    fn cubic_interpolate(&self, terminal: &V, pre_start: &V, post_terminal: &V, t: T) -> V;
+    fn cubic_interpolate(&self, terminal: V, pre_start: V, post_terminal: V, t: T) -> V;
 
     /// Similar to `cubic_interpolate`, but it has additional time parameters `terminal_t`, `pre_start_t`, and `post_terminal_t`.
     /// This can be smoother than `cubic_interpolate` in certain instances.
-    fn cubic_interpolate_in_time(&self, terminal: &V, pre_start: &V, post_terminal: &V, t0: T, terminal_t: T, pre_start_t: T, post_terminal_t: T) -> V;
+    fn cubic_interpolate_in_time(&self, terminal: V, pre_start: V, post_terminal: V, t0: T, terminal_t: T, pre_start_t: T, post_terminal_t: T) -> V;
 
     /// Spherically interpolates between two vectors.
     /// This interpolation is focused on the length or magnitude of the vectors. If the magnitudes are equal,
     /// the interpolation is linear and behaves the same way as `lerp()`.
-    fn slerp(&self, other: &V, t: T) -> V {
+    fn slerp(&self, other: V, t: T) -> V {
         let theta: T = self.angle_to(other);
         self.rotated(theta * t)
     }
 
     /// Returns the result of sliding a vector along a plane as defined by a normal vector.
-    fn slide(&self, normal: &V) -> V {
-        self.identity().to_owned() - (normal.to_owned() * self.dot(normal))
+    fn slide(&self, normal: V) -> V {
+        self.identity() - (normal * self.dot(normal))
     }
 
 
     //=====// Linear Algebra //=====//
     /// Calculates the dot product of two vectors.
-    fn dot(&self, other: &V) -> T;
+    fn dot(&self, other: V) -> T;
 
     /// Calculates the cross product of two vectors.
     /// Note: in 2D vectors, the cross product is the z-component of the 3D cross product of the vectors broadcasted to 3D.
-    fn cross(&self, other: &V) -> T;
+    fn cross(&self, other: V) -> T;
 
     /// Projects this vector onto another vector.
-    fn project(&self, other: &V) -> V {
+    fn project(&self, other: V) -> V {
         
         // Calculate the scalar projection via the dot product and the magnitude of the other vector.
         let scalar_projection: T = self.dot(other) / other.magnitude();
@@ -399,26 +369,16 @@ pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<
     /// Calculates the square of the vector through multiplication.
     fn sqr(&self) -> V;
 
-    /// Raises the vector by a certain power vector.
-    fn v_pow(&self, pow: &V) -> V;
-
     /// Raises the vector by a certain power.
-    fn pow(&self, pow: T) -> V {
-        self.v_pow(&Self::scalar_like(pow))
-    }
+    fn pow<I: Vectorized<T, V>>(&self, pow: I) -> V;
 
     /// Uses this vector as a power over Euler's constant and returns the result.
     fn exp(&self) -> V {
-        Self::scalar_like(T::E()).v_pow(self.identity())
+        T::E().dvec().pow(self.identity())
     }
-
-    /// Derives the log of a vector using a base vector.
-    fn v_log(&self, base: &V) -> V;
 
     /// Derives the log of the vector using a base.
-    fn log(&self, base: T) -> V {
-        self.v_log(&Self::scalar_like(base))
-    }
+    fn log<I: Vectorized<T, V>>(&self, base: I) -> V;
 
     /// Derives the natural log of a vector.
     fn ln(&self) -> V {
@@ -435,13 +395,13 @@ pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<
     fn round(&self) -> V;
 
     /// Snaps the vector to the nearest multiple of a given vector.
-    fn snap_to(&self, multiple: &V) -> V {
-        let diff: V = self.identity().to_owned() % multiple.to_owned();
-        self.identity().to_owned() - diff
+    fn snap_to(&self, multiple: V) -> V {
+        let diff: V = self.identity() % multiple;
+        self.identity() - diff
     }
 
     /// Determines if the vector is approximately equal to another vector.
-    fn approx_eq(&self, other: &V) -> bool;
+    fn approx_eq(&self, other: V) -> bool;
 
 
     //=====// Checks & Flags //=====//
@@ -463,6 +423,20 @@ pub trait FloatVector<T: FloatScalar, V: FloatVector<T, V, A>, A>: SignedVector<
 
     /// Returns if this vector is approximately zero.
     fn is_zero_approx(&self) -> bool {
-        self.approx_eq(&Self::zeros_like())
+        self.approx_eq(T::zero().dvec())
     }
 }
+
+
+/*
+    Vectorized
+        Trait
+*/
+
+
+pub trait Vectorized<T: Scalar + Vectorized<T, V>, V: VectorAbstract<T, V>> {
+    
+    /// Converts a type or tuple of types to a suitable Vector representation.
+    fn dvec(self) -> V;
+}
+

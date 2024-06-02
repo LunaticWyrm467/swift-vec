@@ -22,6 +22,10 @@
 //! The root file of the library. Nothing special here.
 //!
 
+#![no_std]
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
 /// The scalar module contains traits and functions that are added to basic primitive types.
 /// While you can import from this module, scalar traits will automatically be imported from the `prelude` module.
 pub mod scalar;

@@ -23,8 +23,9 @@
 //! for any of the non-shared behaviours of the 2D vector.
 //!
 
+use core::fmt::{ Debug, self };
+
 use super::*;
-use crate::scalar::{ Scalar, SignedScalar };
 
 
 /*
@@ -56,22 +57,14 @@ impl Axis2 {
 /// A 2D Vector with an X and Y component.
 /// Contains behaviours and methods for allowing for algebraic, geometric, and trigonometric operations,
 /// as well as interpolation and other common vector operations.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
 pub struct Vec2<T: Scalar>(pub T, pub T);
 
 impl <T: Scalar> VectorAbstract<T, Vec2<T>> for Vec2<T> {}
 
 impl <T: Scalar> Vector<T, Vec2<T>, Axis2> for Vec2<T>  {
-    fn ones_like() -> Vec2<T> {
-        Vec2(T::one(), T::one())
-    }
-
-    fn zeros_like() -> Vec2<T> {
-        Vec2(T::zero(), T::zero())
-    }
-
-    fn identity(&self) -> &Vec2<T> {
-        self
+    fn identity(&self) -> Vec2<T> {
+        *self
     }
 
     fn rank() -> usize {
@@ -86,6 +79,7 @@ impl <T: Scalar> Vector<T, Vec2<T>, Axis2> for Vec2<T>  {
         }
     }
 
+    #[cfg(feature = "alloc")]
     fn to_vec(&self) -> Vec<T> {
         vec![self.x(), self.y()]
     }
@@ -118,12 +112,20 @@ impl <T: Scalar> Vector<T, Vec2<T>, Axis2> for Vec2<T>  {
         }
     }
 
-    fn v_min(&self, other: &Vec2<T>) -> Vec2<T> {
+    fn min<I: Vectorized<T, Vec2<T>>>(&self, other: I) -> Vec2<T> {
+        let other: Vec2<T> = other.dvec();
         Vec2(self.x().min(other.x()), self.y().min(other.y()))
     }
 
-    fn v_max(&self, other: &Vec2<T>) -> Vec2<T> {
+    fn max<I: Vectorized<T, Vec2<T>>>(&self, other: I) -> Vec2<T> {
+        let other: Vec2<T> = other.dvec();
         Vec2(self.x().max(other.x()), self.y().max(other.y()))
+    }
+
+    fn clamp<I: Vectorized<T, Vec2<T>>>(&self, min: I, max: I) -> Vec2<T> {
+        let min: Vec2<T> = min.dvec();
+        let max: Vec2<T> = max.dvec();
+        Vec2(self.x().clamp(min.x(), max.x()), self.y().clamp(min.y(), max.y()))
     }
 }
 
@@ -138,11 +140,13 @@ impl <T: SignedScalar> SignedVector<T, Vec2<T>, Axis2> for Vec2<T> {
 }
 
 impl <T: IntScalar<T>> IntVector<T, Vec2<T>, Axis2> for Vec2<T> {
-    fn v_pow(&self, pow: &Vec2<T>) -> Vec2<T> {
+    fn pow<I: Vectorized<T, Vec2<T>>>(&self, pow: I) -> Vec2<T> {
+        let pow: Vec2<T> = pow.dvec();
         Vec2(self.x().pow(pow.x().to_u32().unwrap()), self.y().pow(pow.y().to_u32().unwrap()))
     }
 
-    fn v_log(&self, base: &Vec2<T>) -> Vec2<T> {
+    fn log<I: Vectorized<T, Vec2<T>>>(&self, base: I) -> Vec2<T> {
+        let base: Vec2<T> = base.dvec();
         Vec2(self.x().ilog(base.x()), self.y().ilog(base.y()))
     }
 }
@@ -192,43 +196,43 @@ impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2> for Vec2<T> {
         Vec2(self.x().atan(), self.y().atan())
     }
 
-    fn distance_squared_to(&self, other: &Vec2<T>) -> T {
+    fn distance_squared_to(&self, other: Vec2<T>) -> T {
         (self.x() - other.x()).powi(2) + (self.y() - other.y()).powi(2)
     }
 
-    fn bezier_derivative(&self, control_1: &Vec2<T>, control_2: &Vec2<T>, terminal: &Vec2<T>, t: T) -> Vec2<T> {
+    fn bezier_derivative(&self, control_1: Vec2<T>, control_2: Vec2<T>, terminal: Vec2<T>, t: T) -> Vec2<T> {
         Vec2(
             self.x().bezier_derivative(control_1.x(), control_2.x(), terminal.x(), t),
             self.y().bezier_derivative(control_1.y(), control_2.y(), terminal.y(), t)
         )
     }
 
-    fn bezier_sample(&self, control_1: &Vec2<T>, control_2: &Vec2<T>, terminal: &Vec2<T>, t: T) -> Vec2<T> {
+    fn bezier_sample(&self, control_1: Vec2<T>, control_2: Vec2<T>, terminal: Vec2<T>, t: T) -> Vec2<T> {
         Vec2(
             self.x().bezier_sample(control_1.x(), control_2.x(), terminal.x(), t),
             self.y().bezier_sample(control_1.y(), control_2.y(), terminal.y(), t)
         )
     }
 
-    fn cubic_interpolate(&self, terminal: &Vec2<T>, pre_start: &Vec2<T>, post_terminal: &Vec2<T>, t: T) -> Vec2<T> {
+    fn cubic_interpolate(&self, terminal: Vec2<T>, pre_start: Vec2<T>, post_terminal: Vec2<T>, t: T) -> Vec2<T> {
         Vec2(
             self.x().cubic_interpolate(terminal.x(), pre_start.x(), post_terminal.x(), t),
             self.y().cubic_interpolate(terminal.y(), pre_start.y(), post_terminal.y(), t)
         )
     }
 
-    fn cubic_interpolate_in_time(&self, terminal: &Vec2<T>, pre_start: &Vec2<T>, post_terminal: &Vec2<T>, t0: T, terminal_t: T, pre_start_t: T, post_terminal_t: T) -> Vec2<T> {
+    fn cubic_interpolate_in_time(&self, terminal: Vec2<T>, pre_start: Vec2<T>, post_terminal: Vec2<T>, t0: T, terminal_t: T, pre_start_t: T, post_terminal_t: T) -> Vec2<T> {
         Vec2(
             self.x().cubic_interpolate_in_time(terminal.x(), pre_start.x(), post_terminal.x(), t0, terminal_t, pre_start_t, post_terminal_t),
             self.y().cubic_interpolate_in_time(terminal.y(), pre_start.y(), post_terminal.y(), t0, terminal_t, pre_start_t, post_terminal_t)
         )
     }
 
-    fn dot(&self, other: &Vec2<T>) -> T {
+    fn dot(&self, other: Vec2<T>) -> T {
         self.x() * other.x() + self.y() * other.y()
     }
 
-    fn cross(&self, other: &Vec2<T>) -> T {
+    fn cross(&self, other: Vec2<T>) -> T {
         self.x() * other.y() - self.y() * other.x()
     }
 
@@ -240,11 +244,13 @@ impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2> for Vec2<T> {
         Vec2(self.x() * self.x(), self.y() * self.y())
     }
 
-    fn v_pow(&self, pow: &Vec2<T>) -> Vec2<T> {
+    fn pow<I: Vectorized<T, Vec2<T>>>(&self, pow: I) -> Vec2<T> {
+        let pow: Vec2<T> = pow.dvec();
         Vec2(self.x().powf(pow.x()), self.y().powf(pow.y()))
     }
 
-    fn v_log(&self, base: &Vec2<T>) -> Vec2<T> {
+    fn log<I: Vectorized<T, Vec2<T>>>(&self, base: I) -> Vec2<T> {
+        let base: Vec2<T> = base.dvec();
         Vec2(self.x().log(base.x()), self.y().log(base.y()))
     }
 
@@ -260,7 +266,7 @@ impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2> for Vec2<T> {
         Vec2(self.x().round(), self.y().round())
     }
 
-    fn approx_eq(&self, other: &Vec2<T>) -> bool {
+    fn approx_eq(&self, other: Vec2<T>) -> bool {
         let eps: T = T::epsilon() * T::from(4).unwrap();
         relative_eq!(self.x(), other.x(), epsilon = eps) && approx::relative_eq!(self.y(), other.y(), epsilon = eps)
     }
@@ -299,9 +305,12 @@ impl <T: Scalar> Vec2<T> {
     }
 
     /// Converts a `Vec2` to a `Vec2` of a different type.
-    pub fn cast<U: Scalar>(&self) -> Vec2<U> {
-        let err: &str = "Could not cast to type! Check if the value is negative and is being cast to unsigned type!";
-        Vec2(U::from(self.x()).expect(err), U::from(self.y()).expect(err))
+    /// Returns `None` if the cast was unsuccessful.
+    pub fn cast<U: Scalar>(&self) -> Option<Vec2<U>> {
+        match (U::from(self.x()), U::from(self.y())) {
+            (Some(x), Some(y)) => Some(Vec2(x, y)),
+            _                  => None
+        }
     }
 
     /// Returns a `Vec2` that represents this `Vec2`'s X component.
@@ -324,9 +333,9 @@ impl <T: Scalar> Vec2<T> {
         self.1
     }
 
-    /// An alias for the identity function.
+    /// Gets the x and y components of this `Vec2` as another identity function.
     pub fn xy(&self) -> Vec2<T> {
-        self.identity().to_owned()
+        self.identity()
     }
 
     /// Gets the x and y components of this `Vec2` in inverse order as a `Vec2` of 2.
@@ -653,31 +662,31 @@ impl <T: Scalar> Rem<T> for &Vec2<T> {
 
 impl <T: Scalar> AddAssign for Vec2<T> {
     fn add_assign(&mut self, other: Self) -> () {
-        *self = self.to_owned() + other;
+        *self = *self + other;
     }
 }
 
 impl <T: Scalar> SubAssign for Vec2<T> {
     fn sub_assign(&mut self, other: Self) -> () {
-        *self = self.to_owned() - other;
+        *self = *self - other;
     }
 }
 
 impl <T: Scalar> MulAssign for Vec2<T> {
     fn mul_assign(&mut self, other: Self) -> () {
-        *self = self.to_owned() * other;
+        *self = *self * other;
     }
 }
 
 impl <T: Scalar> DivAssign for Vec2<T> {
     fn div_assign(&mut self, other: Self) -> () {
-        *self = self.to_owned() / other;
+        *self = *self / other;
     }
 }
 
 impl <T: Scalar> RemAssign for Vec2<T> {
     fn rem_assign(&mut self, other: Self) -> () {
-        *self = self.to_owned() % other;
+        *self = *self % other;
     }
 }
 
@@ -694,8 +703,33 @@ impl <T: Scalar> Default for Vec2<T> {
     }
 }
 
-impl <T: Scalar> std::fmt::Display for Vec2<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl <T: Scalar> Display for Vec2<T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Vec2({}, {})", self.0, self.1)
+    }
+}
+
+
+/*
+    Vectorized
+        Trait
+*/
+
+
+impl <T: Scalar> Vectorized<T, Vec2<T>> for T {
+    fn dvec(self) -> Vec2<T> {
+        Vec2(self, self)
+    }
+}
+
+impl <T: Scalar> Vectorized<T, Vec2<T>> for (T, T) {
+    fn dvec(self) -> Vec2<T> {
+        Vec2(self.0, self.1)
+    }
+}
+
+impl <T: Scalar> Vectorized<T, Vec2<T>> for Vec2<T> {
+    fn dvec(self) -> Vec2<T> {
+        self
     }
 }

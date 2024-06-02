@@ -53,7 +53,7 @@ impl <T: Scalar> Rect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {
         Rect2(position, size)
     }
 
-    fn encompass_points(points: &Vec<Vec2<T>>) -> Rect2<T> {
+    fn encompass_points(points: &[Vec2<T>]) -> Rect2<T> {
         let top:    T = points.iter().map(|p| p.y()).reduce(T::min).unwrap();
         let bottom: T = points.iter().map(|p| p.y()).reduce(T::max).unwrap();
         let left:   T = points.iter().map(|p| p.x()).reduce(T::min).unwrap();
@@ -66,16 +66,16 @@ impl <T: Scalar> Rect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {
         self
     }
 
-    fn position(&self) -> &Vec2<T> {
-        &self.0
+    fn position(&self) -> Vec2<T> {
+        self.0
     }
 
     fn position_mut(&mut self) -> &mut Vec2<T> {
         &mut self.0
     }
 
-    fn size(&self) -> &Vec2<T> {
-        &self.1
+    fn size(&self) -> Vec2<T> {
+        self.1
     }
 
     fn size_mut(&mut self) -> &mut Vec2<T> {
@@ -92,7 +92,7 @@ impl <T: Scalar> Rect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {
 
     fn vertex(&self, idx: usize) -> Vec2<T> {
         match idx {
-            0 => self.position().to_owned(),
+            0 => self.position(),
             1 => self.position() + &self.size().of_x(),
             2 => self.position() + self.size(),
             3 => self.position() + &self.size().of_y(),
@@ -125,8 +125,8 @@ impl <T: Scalar> Rect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {
     fn expand_to_include(&self, point: Vec2<T>) -> Rect2<T> {
         
         // Break down this rectangle into a simple "origin" and "end" pair of vectors.
-        let mut origin: Vec2<T> = self.position().to_owned();
-        let mut end:    Vec2<T> = self.end().to_owned();
+        let mut origin: Vec2<T> = self.position();
+        let mut end:    Vec2<T> = self.end();
 
         // Check each component of the origin and end and compare it to that of the given point.
         // If a component of a vector is out of bounds, then update the respective component of either the origin or end.
@@ -149,10 +149,10 @@ impl <T: Scalar> Rect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {
 
     fn grow_side(&self, side: Side2, amount: T) -> Rect2<T> {
         match side {
-            Side2::Top    => Rect2(self.0.to_owned() - Vec2::on_y(amount), self.1.to_owned() + Vec2::on_y(amount)),
-            Side2::Bottom => Rect2(self.0.to_owned(), self.1.to_owned() + Vec2::on_y(amount)),
-            Side2::Left   => Rect2(self.0.to_owned() - Vec2::on_x(amount), self.1.to_owned() + Vec2::on_x(amount)),
-            Side2::Right  => Rect2(self.0.to_owned(), self.1.to_owned() + Vec2::on_x(amount))
+            Side2::Top    => Rect2(self.0 - Vec2::on_y(amount), self.1 + Vec2::on_y(amount)),
+            Side2::Bottom => Rect2(self.0, self.1 + Vec2::on_y(amount)),
+            Side2::Left   => Rect2(self.0 - Vec2::on_x(amount), self.1 + Vec2::on_x(amount)),
+            Side2::Right  => Rect2(self.0, self.1 + Vec2::on_x(amount))
         }
     }
 
@@ -206,8 +206,12 @@ impl <T: Scalar> Rect2<T> {
     }
 
     /// Converts a `Rect2` to a `Rect2` of a different type.
-    pub fn cast<U: Scalar>(&self) -> Rect2<U> {
-        Rect2(self.0.cast(), self.1.cast())
+    /// Returns `None` if the cast failed.
+    pub fn cast<U: Scalar>(&self) -> Option<Rect2<U>> {
+        match (self.0.cast(), self.1.cast()) {
+            (Some(position), Some(dimensions)) => Some(Rect2(position, dimensions)),
+            _                                  => None
+        }
     }
 
     /// Returns the x component of the origin of the `Rect2`.
@@ -244,8 +248,8 @@ impl <T: Scalar> Default for Rect2<T> {
     }
 }
 
-impl <T: Scalar> std::fmt::Display for Rect2<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl <T: Scalar> Display for Rect2<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "Rect2({}, {})", self.0, self.1)
     }
 }

@@ -14,5 +14,9 @@ description = "A convenient and comfortable vector maths crate that supports 2D,
 license     = "MIT OR Apache-2.0"
 
 [dependencies]
-num-traits = "0.2.17"
+num-traits = { version = "0.2.17", default-features = false, features = ["libm"] }
 approx     = "0.5.1"
+
+[features]
+default = ["alloc"]
+alloc = []
