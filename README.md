@@ -1,7 +1,7 @@
 # SwiftVec
-[![Static Badge](https://img.shields.io/badge/GITHUB-LunaticWyrm467%2Fswift-vec-LunaticWyrm467%2Fswift-vec?style=for-the-badge&logo=github)](https://github.com/LunaticWyrm467/swift-vec)
+[![Static Badge](https://img.shields.io/badge/GITHUB-LunaticWyrm467%2Fswift_vec-LunaticWyrm467%2Fswift_vec?style=for-the-badge&logo=github)](https://github.com/LunaticWyrm467/swift-vec)
 [![Crates.io Version](https://img.shields.io/crates/v/swift-vec?style=for-the-badge&logo=rust)](https://crates.io/crates/swift-vec)
-[![Static Badge](https://img.shields.io/badge/DOCS.RS-swift-vec-66c2a5?style=for-the-badge&logo=docs.rs)](https://docs.rs/swift-vec)
+[![Static Badge](https://img.shields.io/badge/DOCS.RS-swift_vec-66c2a5?style=for-the-badge&logo=docs.rs)](https://docs.rs/swift-vec)
 ![Crates.io License](https://img.shields.io/crates/l/swift-vec?color=green&style=for-the-badge)
 
 **SwiftVec** is an easy-to-use, intuitive vector maths library with a ton
