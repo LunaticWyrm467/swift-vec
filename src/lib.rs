@@ -36,6 +36,30 @@ pub mod rect;
 /// This does not include any of the individual types. If you want those, import from the `vector` and/or `rect` modules.
 pub mod prelude {
     pub use crate::scalar::{ Scalar, IntScalar, SignedScalar, FloatScalar };
-    pub use crate::vector::{ Vector, IntVector, SignedVector, FloatVector };
+    pub use crate::vector::{ Vector, IntVector, SignedVector, FloatVector, Vectorized2D, Vectorized3D };
     pub use crate::rect::{ Rect, SignedRect, FloatRect };
+}
+
+
+/*
+    Vectorized
+        Trait
+*/
+
+/// We expose this private trait to the whole library so our library's generic traits can use it,
+/// but we don't allow it to be used outside of the library since there are more readable options
+/// such as `Vectorized2D`, `Vectorized3D`, and `Vectorized4D` whose functions are more
+/// approachable.
+mod vectorized {
+    use crate::vector::VectorAbstract;
+    use crate::scalar::Scalar;
+
+    pub trait Vectorized<T: Scalar + Vectorized<T, V>, V: VectorAbstract<T, V>>: Clone + Copy {
+        
+        /// Returns a scalar if the type is a scalar, otherwise returns None.
+        fn attempt_get_scalar(self) -> Option<T>;
+
+        /// Converts a type or tuple of types to a suitable Vector representation.
+        fn dvec(self) -> V;
+    }
 }

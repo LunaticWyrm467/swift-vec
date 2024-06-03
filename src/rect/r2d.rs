@@ -24,7 +24,7 @@
 //!
 
 use super::*;
-use crate::vector::{ Vec2, Axis2 };
+use crate::vector::{ Vec2, Axis2::{ self, X, Y } };
 
 
 /*
@@ -54,10 +54,10 @@ impl <T: Scalar> Rect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {
     }
 
     fn encompass_points(points: &[Vec2<T>]) -> Rect2<T> {
-        let top:    T = points.iter().map(|p| p.y()).reduce(T::min).unwrap();
-        let bottom: T = points.iter().map(|p| p.y()).reduce(T::max).unwrap();
-        let left:   T = points.iter().map(|p| p.x()).reduce(T::min).unwrap();
-        let right:  T = points.iter().map(|p| p.x()).reduce(T::max).unwrap();
+        let top:    T = points.iter().map(|p| p[Y]).reduce(T::min).unwrap();
+        let bottom: T = points.iter().map(|p| p[Y]).reduce(T::max).unwrap();
+        let left:   T = points.iter().map(|p| p[X]).reduce(T::min).unwrap();
+        let right:  T = points.iter().map(|p| p[X]).reduce(T::max).unwrap();
 
         Rect2::from_offsets(left, top, right, bottom)
     }
@@ -101,25 +101,21 @@ impl <T: Scalar> Rect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {
     }
 
     fn longest_axis(&self) -> Axis2 {
-        if self.size().y() > self.size().x() {
-            return Axis2::Y;
+        if self.size()[Y] > self.size()[X] {
+            return Y;
         }
-        Axis2::X
+        X
     }
 
     fn shortest_axis(&self) -> Axis2 {
-        if self.size().y() < self.size().x() {
-            return Axis2::Y;
+        if self.size()[Y] < self.size()[X] {
+            return Y;
         }
-        Axis2::X
+        X
     }
 
     fn axis_length(&self, axis: Axis2) -> T {
-        match axis {
-            Axis2::X    => self.size().x(),
-            Axis2::Y    => self.size().y(),
-            Axis2::None => panic!("Axis cannot be None.")
-        }
+        self.size()[axis]
     }
 
     fn expand_to_include(&self, point: Vec2<T>) -> Rect2<T> {
@@ -130,18 +126,18 @@ impl <T: Scalar> Rect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {
 
         // Check each component of the origin and end and compare it to that of the given point.
         // If a component of a vector is out of bounds, then update the respective component of either the origin or end.
-        if point.x() < origin.x() {
-            origin.set_x(point.x());
+        if point[X] < origin[X] {
+            origin[X] = point[X];
         }
-        if point.y() < origin.y() {
-            origin.set_y(point.y());
+        if point[Y] < origin[Y] {
+            origin[Y] = point[Y];
         }
 
-        if point.x() > end.x() {
-            end.set_x(point.x());
+        if point[X] > end[X] {
+            end[X] = point[X];
         }
-        if point.y() > end.y() {
-            end.set_y(point.y());
+        if point[Y] > end[Y] {
+            end[Y] = point[Y];
         }
 
         Rect2(origin, end)
@@ -158,29 +154,29 @@ impl <T: Scalar> Rect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {
 
     fn intersects(&self, other: &Rect2<T>, including_borders: bool) -> bool {
         if including_borders {
-            if self.position().x() > other.position().x() + other.size().x() {
+            if self.position()[X] > other.position()[X] + other.size()[X] {
                 return false;
             }
-            if self.position().x() + self.size().x() < other.position().x() {
+            if self.position()[X] + self.size()[X] < other.position()[X] {
                 return false;
             }
-            if self.position().y() > other.position().y() + other.size().y() {
+            if self.position()[Y] > other.position()[Y] + other.size()[Y] {
                 return false;
             }
-            if self.position().y() + self.size().y() < other.position().y() {
+            if self.position()[Y] + self.size()[Y] < other.position()[Y] {
                 return false;
             }
         } else {
-            if self.position().x() >= other.position().x() + other.size().x() {
+            if self.position()[X] >= other.position()[X] + other.size()[X] {
                 return false;
             }
-            if self.position().x() + self.size().x() <= other.position().x() {
+            if self.position()[X] + self.size()[X] <= other.position()[X] {
                 return false;
             }
-            if self.position().y() >= other.position().y() + other.size().y() {
+            if self.position()[Y] >= other.position()[Y] + other.size()[Y] {
                 return false;
             }
-            if self.position().y() + self.size().y() <= other.position().y() {
+            if self.position()[Y] + self.size()[Y] <= other.position()[Y] {
                 return false;
             }
         }
@@ -191,7 +187,7 @@ impl <T: Scalar> Rect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {
 
 impl <T: SignedScalar> SignedRect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {}
 
-impl <T: FloatScalar> FloatRect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {}
+impl <T: FloatScalar> FloatRect<T, Vec2<T>, Rect2<T>, Axis2, Side2, T> for Rect2<T> {}
 
 impl <T: Scalar> Rect2<T> {
 
@@ -216,22 +212,22 @@ impl <T: Scalar> Rect2<T> {
 
     /// Returns the x component of the origin of the `Rect2`.
     pub fn x(&self) -> T {
-        self.0.x()
+        self.0[X]
     }
 
     /// Returns the y component of the origin of the `Rect2`.
     pub fn y(&self) -> T {
-        self.0.y()
+        self.0[Y]
     }
 
     /// Returns the width of the `Rect2`.
     pub fn width(&self) -> T {
-        self.1.x()
+        self.1[X]
     }
 
     /// Returns the height of the `Rect2`.
     pub fn height(&self) -> T {
-        self.1.y()
+        self.1[Y]
     }
 }
 

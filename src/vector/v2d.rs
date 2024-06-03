@@ -23,9 +23,57 @@
 //! for any of the non-shared behaviours of the 2D vector.
 //!
 
-use core::fmt::{ Debug, self };
-
 use super::*;
+
+
+/*
+ * 2D Vector
+ *      Indexing
+ */
+
+
+/// Simply represents an axis of a 2-dimensional graph or plane,
+/// which can be used to index a scalar from a `Vec2` type.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Axis2 {
+    NoAxis,
+    X,
+    Y
+}
+use Axis2::{ X, Y, NoAxis };
+
+impl Axis2 {
+
+    /// Gets a normalized `Vec2` representing this axis.
+    pub fn to_vec2<T: Scalar>(&self) -> Vec2<T> {
+        match self {
+            X      => Vec2(T::one(),  T::zero()),
+            Y      => Vec2(T::zero(), T::one() ),
+            NoAxis => Vec2(T::zero(), T::zero())
+        }
+    }
+}
+
+impl <T: Scalar> Index<Axis2> for Vec2<T> {
+    type Output = T;
+    fn index(&self, index: Axis2) -> &Self::Output {
+        match index {
+            X      => &self.0,
+            Y      => &self.1,
+            NoAxis => panic!("`NoAxis` is not a valid index!")
+        }
+    }
+}
+
+impl <T: Scalar> IndexMut<Axis2> for Vec2<T> {
+    fn index_mut(&mut self, index: Axis2) -> &mut Self::Output {
+        match index {
+            X      => &mut self.0,
+            Y      => &mut self.1,
+            NoAxis => panic!("`NoAxis` is not a valid index!")
+        }
+    }
+}
 
 
 /*
@@ -33,26 +81,6 @@ use super::*;
         Implementation
 */
 
-
-/// Simply represents an axis of a 2-dimensional graph or plane.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Axis2 {
-    None,
-    X,
-    Y
-}
-
-impl Axis2 {
-
-    /// Gets a normalized `Vec2` representing this axis.
-    pub fn to_vec2<T: Scalar>(&self) -> Vec2<T> {
-        match self {
-            Axis2::X    => Vec2(T::one(),  T::zero()),
-            Axis2::Y    => Vec2(T::zero(), T::one() ),
-            Axis2::None => Vec2(T::zero(), T::zero())
-        }
-    }
-}
 
 /// A 2D Vector with an X and Y component.
 /// Contains behaviours and methods for allowing for algebraic, geometric, and trigonometric operations,
@@ -71,204 +99,193 @@ impl <T: Scalar> Vector<T, Vec2<T>, Axis2> for Vec2<T>  {
         2
     }
 
-    fn get(&self, axis: Axis2) -> T {
-        match axis {
-            Axis2::X    => self.x(),
-            Axis2::Y    => self.y(),
-            Axis2::None => panic!("Axis2::None is not a valid axis!")
-        }
-    }
-
     #[cfg(feature = "alloc")]
     fn to_vec(&self) -> Vec<T> {
-        vec![self.x(), self.y()]
+        vec![self[X], self[Y]]
     }
 
     fn sum(&self) -> T {
-        self.x() + self.y()
+        self[X] + self[Y]
     }
 
     fn product(&self) -> T {
-        self.x() * self.y()
+        self[X] * self[Y]
     }
 
     fn argmax(&self) -> Axis2 {
-        if self.x() == self.y() {
-            Axis2::None
-        } else if self.x() > self.y() {
-            Axis2::X
+        if self[X] == self[Y] {
+            NoAxis
+        } else if self[X] > self[Y] {
+            X
         } else {
-            Axis2::Y
+            Y
         }
     }
 
     fn argmin(&self) -> Axis2 {
-        if self.x() == self.y() {
-            Axis2::None
-        } else if self.x() < self.y() {
-            Axis2::X
+        if self[X] == self[Y] {
+            NoAxis
+        } else if self[X] < self[Y] {
+            X
         } else {
-            Axis2::Y
+            Y
         }
     }
 
     fn min<I: Vectorized<T, Vec2<T>>>(&self, other: I) -> Vec2<T> {
         let other: Vec2<T> = other.dvec();
-        Vec2(self.x().min(other.x()), self.y().min(other.y()))
+        Vec2(self[X].min(other[X]), self[Y].min(other[Y]))
     }
 
     fn max<I: Vectorized<T, Vec2<T>>>(&self, other: I) -> Vec2<T> {
         let other: Vec2<T> = other.dvec();
-        Vec2(self.x().max(other.x()), self.y().max(other.y()))
+        Vec2(self[X].max(other[X]), self[Y].max(other[Y]))
     }
 
     fn clamp<I: Vectorized<T, Vec2<T>>>(&self, min: I, max: I) -> Vec2<T> {
         let min: Vec2<T> = min.dvec();
         let max: Vec2<T> = max.dvec();
-        Vec2(self.x().clamp(min.x(), max.x()), self.y().clamp(min.y(), max.y()))
+        Vec2(self[X].clamp(min[X], max[X]), self[Y].clamp(min[Y], max[Y]))
     }
 }
 
 impl <T: SignedScalar> SignedVector<T, Vec2<T>, Axis2> for Vec2<T> {
     fn signum(&self) -> Vec2<T> {
-        Vec2(self.x().signum(), self.y().signum())
+        Vec2(self[X].signum(), self[Y].signum())
     }
 
     fn abs(&self) -> Vec2<T> {
-        Vec2(self.x().abs(), self.y().abs())
+        Vec2(self[X].abs(), self[Y].abs())
     }
 }
 
 impl <T: IntScalar<T>> IntVector<T, Vec2<T>, Axis2> for Vec2<T> {
     fn pow<I: Vectorized<T, Vec2<T>>>(&self, pow: I) -> Vec2<T> {
         let pow: Vec2<T> = pow.dvec();
-        Vec2(self.x().pow(pow.x().to_u32().unwrap()), self.y().pow(pow.y().to_u32().unwrap()))
+        Vec2(self[X].pow(pow[X].to_u32().unwrap()), self[Y].pow(pow[Y].to_u32().unwrap()))
     }
 
     fn log<I: Vectorized<T, Vec2<T>>>(&self, base: I) -> Vec2<T> {
         let base: Vec2<T> = base.dvec();
-        Vec2(self.x().ilog(base.x()), self.y().ilog(base.y()))
+        Vec2(self[X].ilog(base[X]), self[Y].ilog(base[Y]))
     }
 }
 
-impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2> for Vec2<T> {
-    fn rotated(&self, angle: T) -> Vec2<T> {
-        
-        // Compute the sine and cosine of the angle.
-        let (sine, cosine): (T, T) = angle.sin_cos();
-
-        // Rotate the vector using the rotation matrix formula.
-        Vec2(
-            self.x() * cosine - self.y() * sine,
-            self.x() * sine   + self.y() * cosine
-        )
-    }
-
+impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2, T> for Vec2<T> {    
     fn to_radians(&self) -> Vec2<T> {
-        Vec2(self.x().to_radians(), self.y().to_radians())
+        Vec2(self[X].to_radians(), self[Y].to_radians())
     }
 
     fn to_degrees(&self) -> Vec2<T> {
-        Vec2(self.x().to_degrees(), self.y().to_degrees())
+        Vec2(self[X].to_degrees(), self[Y].to_degrees())
     }
 
     fn sin(&self) -> Vec2<T> {
-        Vec2(self.x().sin(), self.y().sin())
+        Vec2(self[X].sin(), self[Y].sin())
     }
 
     fn cos(&self) -> Vec2<T> {
-        Vec2(self.x().cos(), self.y().cos())
+        Vec2(self[X].cos(), self[Y].cos())
     }
 
     fn tan(&self) -> Vec2<T> {
-        Vec2(self.x().tan(), self.y().tan())
+        Vec2(self[X].tan(), self[Y].tan())
     }
 
     fn asin(&self) -> Vec2<T> {
-        Vec2(self.x().asin(), self.y().asin())
+        Vec2(self[X].asin(), self[Y].asin())
     }
 
     fn acos(&self) -> Vec2<T> {
-        Vec2(self.x().acos(), self.y().acos())
+        Vec2(self[X].acos(), self[Y].acos())
     }
 
     fn atan(&self) -> Vec2<T> {
-        Vec2(self.x().atan(), self.y().atan())
+        Vec2(self[X].atan(), self[Y].atan())
     }
 
     fn distance_squared_to(&self, other: Vec2<T>) -> T {
-        (self.x() - other.x()).powi(2) + (self.y() - other.y()).powi(2)
+        (self[X] - other[X]).powi(2) + (self[Y] - other[Y]).powi(2)
+    }
+    
+    fn smoothstep<I: Vectorized<T, Vec2<T>>>(&self, a: I, b: I) -> Vec2<T> {
+        let a: Vec2<T> = a.dvec();
+        let b: Vec2<T> = b.dvec();
+
+        Vec2(
+            self[X].smoothstep(a[X], b[X]),
+            self[Y].smoothstep(a[Y], b[Y])
+        )
     }
 
     fn bezier_derivative(&self, control_1: Vec2<T>, control_2: Vec2<T>, terminal: Vec2<T>, t: T) -> Vec2<T> {
         Vec2(
-            self.x().bezier_derivative(control_1.x(), control_2.x(), terminal.x(), t),
-            self.y().bezier_derivative(control_1.y(), control_2.y(), terminal.y(), t)
+            self[X].bezier_derivative(control_1[X], control_2[X], terminal[X], t),
+            self[Y].bezier_derivative(control_1[Y], control_2[Y], terminal[Y], t)
         )
     }
 
     fn bezier_sample(&self, control_1: Vec2<T>, control_2: Vec2<T>, terminal: Vec2<T>, t: T) -> Vec2<T> {
         Vec2(
-            self.x().bezier_sample(control_1.x(), control_2.x(), terminal.x(), t),
-            self.y().bezier_sample(control_1.y(), control_2.y(), terminal.y(), t)
+            self[X].bezier_sample(control_1[X], control_2[X], terminal[X], t),
+            self[Y].bezier_sample(control_1[Y], control_2[Y], terminal[Y], t)
         )
     }
     
     fn cubic_interpolate(&self, b: Vec2<T>, pre_a: Vec2<T>, post_b: Vec2<T>, weight: T) -> Vec2<T> {
         Vec2(
-            self.x().cubic_interpolate(b.x(), pre_a.x(), post_b.x(), weight),
-            self.y().cubic_interpolate(b.y(), pre_a.y(), post_b.y(), weight)
+            self[X].cubic_interpolate(b[X], pre_a[X], post_b[X], weight),
+            self[Y].cubic_interpolate(b[Y], pre_a[Y], post_b[Y], weight)
         )
     }
     
     fn cubic_interpolate_in_time(&self, b: Vec2<T>, pre_a: Vec2<T>, post_b: Vec2<T>, weight: T, b_t: T, pre_a_t: T, post_b_t: T) -> Vec2<T> {
         Vec2(
-            self.x().cubic_interpolate_in_time(b.x(), pre_a.x(), post_b.x(), weight, b_t, pre_a_t, post_b_t),
-            self.y().cubic_interpolate_in_time(b.y(), pre_a.y(), post_b.y(), weight, b_t, pre_a_t, post_b_t)
+            self[X].cubic_interpolate_in_time(b[X], pre_a[X], post_b[X], weight, b_t, pre_a_t, post_b_t),
+            self[Y].cubic_interpolate_in_time(b[Y], pre_a[Y], post_b[Y], weight, b_t, pre_a_t, post_b_t)
         )
     }
 
     fn dot(&self, other: Vec2<T>) -> T {
-        self.x() * other.x() + self.y() * other.y()
+        self[X] * other[X] + self[Y] * other[Y]
     }
 
     fn cross(&self, other: Vec2<T>) -> T {
-        self.x() * other.y() - self.y() * other.x()
+        self[X] * other[Y] - self[Y] * other[X]
     }
 
     fn sqrt(&self) -> Vec2<T> {
-        Vec2(self.x().sqrt(), self.y().sqrt())
+        Vec2(self[X].sqrt(), self[Y].sqrt())
     }
 
     fn sqr(&self) -> Vec2<T> {
-        Vec2(self.x() * self.x(), self.y() * self.y())
+        Vec2(self[X] * self[X], self[Y] * self[Y])
     }
 
     fn pow<I: Vectorized<T, Vec2<T>>>(&self, pow: I) -> Vec2<T> {
         let pow: Vec2<T> = pow.dvec();
-        Vec2(self.x().powf(pow.x()), self.y().powf(pow.y()))
+        Vec2(self[X].powf(pow[X]), self[Y].powf(pow[Y]))
     }
 
     fn log<I: Vectorized<T, Vec2<T>>>(&self, base: I) -> Vec2<T> {
         let base: Vec2<T> = base.dvec();
-        Vec2(self.x().log(base.x()), self.y().log(base.y()))
+        Vec2(self[X].log(base[X]), self[Y].log(base[Y]))
     }
 
     fn floor(&self) -> Vec2<T> {
-        Vec2(self.x().floor(), self.y().floor())
+        Vec2(self[X].floor(), self[Y].floor())
     }
 
     fn ceil(&self) -> Vec2<T> {
-        Vec2(self.y().ceil(), self.y().ceil())
+        Vec2(self[Y].ceil(), self[Y].ceil())
     }
 
     fn round(&self) -> Vec2<T> {
-        Vec2(self.x().round(), self.y().round())
+        Vec2(self[X].round(), self[Y].round())
     }
 
     fn approx_eq(&self, other: Vec2<T>) -> bool {
-        let eps: T = T::epsilon() * T::from(4).unwrap();
-        relative_eq!(self.x(), other.x(), epsilon = eps) && approx::relative_eq!(self.y(), other.y(), epsilon = eps)
+        self[X].approx_eq(other[X]) && self[Y].approx_eq(other[Y])
     }
 }
 
@@ -294,20 +311,10 @@ impl <T: Scalar> Vec2<T> {
         Vec2(T::zero(), y)
     }
 
-    /// Initializes a `Vec2` from a scalar.
-    pub fn of(scalar: T) -> Vec2<T> {
-        Vec2(scalar, scalar)
-    }
-
-    /// Converts a tuple to a `Vec2`.
-    pub fn from_tuple(tuple: (T, T)) -> Vec2<T> {
-        Vec2(tuple.0, tuple.1)
-    }
-
     /// Converts a `Vec2` to a `Vec2` of a different type.
     /// Returns `None` if the cast was unsuccessful.
     pub fn cast<U: Scalar>(&self) -> Option<Vec2<U>> {
-        match (U::from(self.x()), U::from(self.y())) {
+        match (U::from(self[X]), U::from(self[Y])) {
             (Some(x), Some(y)) => Some(Vec2(x, y)),
             _                  => None
         }
@@ -315,22 +322,12 @@ impl <T: Scalar> Vec2<T> {
 
     /// Returns a `Vec2` that represents this `Vec2`'s X component.
     pub fn of_x(&self) -> Vec2<T> {
-        Vec2(self.x(), T::zero())
+        Vec2(self[X], T::zero())
     }
 
     /// Returns a `Vec2` that represents this `Vec2`'s Y component.
     pub fn of_y(&self) -> Vec2<T> {
-        Vec2(T::zero(), self.y())
-    }
-    
-    /// Gets the x component of the `Vec2`.
-    pub fn x(&self) -> T {
-        self.0
-    }
-
-    /// Gets the y component of the `Vec2`.
-    pub fn y(&self) -> T {
-        self.1
+        Vec2(T::zero(), self[Y])
     }
 
     /// Gets the x and y components of this `Vec2` as another identity function.
@@ -338,59 +335,14 @@ impl <T: Scalar> Vec2<T> {
         self.identity()
     }
 
-    /// Gets the x and y components of this `Vec2` in inverse order as a `Vec2` of 2.
+    /// Gets the x and y components of this `Vec2` in inverse order as a `Vec2`.
     pub fn yx(&self) -> Vec2<T> {
-        Vec2(self.y(), self.x())
-    }
-
-    /// Gets the mutable x component of the `Vec2`.
-    pub fn x_mut(&mut self) -> &mut T {
-        &mut self.0
-    }
-
-    /// Gets the mutable y component of the `Vec2`.
-    pub fn y_mut(&mut self) -> &mut T {
-        &mut self.1
-    }
-
-    /// Gets a tuple of mutable references for the x and y components of this `Vec2`.
-    pub fn xy_mut(&mut self) -> (&mut T, &mut T) {
-        (&mut self.0, &mut self.1)
-    }
-
-    /// Gets a tuple of the mutable references for the x and y components of this `Vec2` in inverse order.
-    pub fn yx_mut(&mut self) -> (&mut T, &mut T) {
-        (&mut self.1, &mut self.0)
-    }
-
-    /// Sets the x component of the `Vec2`.
-    pub fn set_x(&mut self, x: T) {
-        self.0 = x;
-    }
-
-    /// Sets the y component of the `Vec2`.
-    pub fn set_y(&mut self, y: T) {
-        self.1 = y;
-    }
-
-    /// Sets the x and y components of this `Vec2` - overwriting the previous values.
-    pub fn set_xy(&mut self, xy: Vec2<T>) {
-        *self = xy;
-    }
-
-    /// Sets the x and y components of this `Vec2` - overwriting the previous values.
-    pub fn set_yx(&mut self, xy: Vec2<T>) {
-        *self = xy.yx();
-    }
-
-    /// Gets the x and y components of this `Vec2` in order as a tuple.
-    pub fn raw(&self) -> (T, T) {
-        (self.x(), self.y())
+        Vec2(self[Y], self[X])
     }
 
     /// Calculates the aspect ratio of this `Vec2`.
     pub fn aspect_ratio(&self) -> T {
-        self.x() / self.y()
+        self[X] / self[Y]
     }    
 }
 
@@ -418,7 +370,7 @@ impl <T: FloatScalar> Vec2<T> {
     /// # Returns
     /// The angle of the `Vec2` in radians.
     pub fn angle(&self) -> T {
-        self.y().atan2(self.x())
+        self[Y].atan2(self[X])
     }
 
     /// Calculates the angle between the line connecting the two positions `self` and `other` and the x-axis.
@@ -426,6 +378,32 @@ impl <T: FloatScalar> Vec2<T> {
     /// The angle in radians.
     pub fn angle_between(&self, other: &Vec2<T>) -> T {
         (other - self).angle()
+    }
+
+    /// Rotates this vector by a given angle in radians.
+    pub fn rotated(&self, angle: T) -> Vec2<T> {
+        
+        // Compute the sine and cosine of the angle.
+        let (sine, cosine): (T, T) = angle.sin_cos();
+
+        // Rotate the vector using the rotation matrix formula.
+        Vec2(
+            self[X] * cosine - self[Y] * sine,
+            self[X] * sine   + self[Y] * cosine
+        )
+    }
+
+    /// Rotates this vector by 90 degrees counter clockwise.
+    pub fn orthogonal(&self) -> Vec2<T> {
+        self.rotated(T::from(FRAC_PI_2).unwrap())
+    }
+
+    /// Spherically interpolates between two vectors.
+    /// This interpolation is focused on the length or magnitude of the vectors. If the magnitudes are equal,
+    /// the interpolation is linear and behaves the same way as `lerp()`.
+    pub fn slerp(&self, other: Vec2<T>, t: T) -> Vec2<T> {
+        let theta: T = self.angle_to(other);
+        self.rotated(theta * t)
     }
 }
 
@@ -717,19 +695,50 @@ impl <T: Scalar> Display for Vec2<T> {
 
 
 impl <T: Scalar> Vectorized<T, Vec2<T>> for T {
+    fn attempt_get_scalar(self) -> Option<T> {
+        Some(self)
+    }
+
     fn dvec(self) -> Vec2<T> {
         Vec2(self, self)
     }
 }
 
 impl <T: Scalar> Vectorized<T, Vec2<T>> for (T, T) {
+    fn attempt_get_scalar(self) -> Option<T> {
+        None
+    }
+
     fn dvec(self) -> Vec2<T> {
         Vec2(self.0, self.1)
     }
 }
 
 impl <T: Scalar> Vectorized<T, Vec2<T>> for Vec2<T> {
+    fn attempt_get_scalar(self) -> Option<T> {
+        None
+    }
+
     fn dvec(self) -> Vec2<T> {
         self
+    }
+}
+
+pub trait Vectorized2D<T: Scalar> {
+    
+    /// Converts a type that can be represented as a Vector of 2 as a `Vec2`.
+    /// This is the public interface for the `Vectorized` trait.
+    fn vec2(self) -> Vec2<T>;
+}
+
+impl <T: Scalar + Vectorized<T, Vec2<T>>> Vectorized2D<T> for T {
+    fn vec2(self) -> Vec2<T> {
+        self.dvec()
+    }
+}
+
+impl <T: Scalar + Vectorized<T, Vec2<T>>> Vectorized2D<T> for (T, T) {
+    fn vec2(self) -> Vec2<T> {
+        self.dvec()
     }
 }

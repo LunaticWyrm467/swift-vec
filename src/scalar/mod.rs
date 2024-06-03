@@ -1,6 +1,5 @@
 use core::fmt::{ Display, Debug };
 
-use approx::{ RelativeEq, AbsDiffEq };
 use num_traits::{ Num, Signed, Float, FloatConst, PrimInt, NumCast };
 
 
@@ -126,7 +125,50 @@ pub trait SignedScalar: Scalar + Signed {
 }
 
 /// Implements unique operations for all floating point primitives.
-pub trait FloatScalar: SignedScalar + Float + FloatConst + RelativeEq + AbsDiffEq<Epsilon = Self> {}
+pub trait FloatScalar: SignedScalar + Float + FloatConst {
+    
+    /// Modulates a value so that it stays between 0-1.
+    fn fract(self) -> Self {
+        self - self.floor()
+    }
+    
+    /// Computes the inverse square root of a scalar.
+    fn inv_sqrt(self) -> Self {
+        Self::one() / self.sqrt()
+    }
+
+    /// A `smoothstep` implementation similar to that of OpenGL's, which uses smooth Hermite
+    /// interpolation between the values `a` and `b` for `self.
+    fn smoothstep(self, a: Self, b: Self) -> Self {
+        let t_2: Self = Self::from(2).unwrap();
+        let t_3: Self = Self::from(3).unwrap();
+
+        let y: Self = (self - a) / (b - a).clamp(Self::zero(), Self::one());
+	    y * y * (t_3 - (t_2 * y))
+    }
+
+    /// Checks if two floating point values are approximately equal.
+    fn approx_eq(self, other: Self) -> bool {
+        
+        /*
+         * Uses Godot's method:
+         * https://github.com/godotengine/godot/blob/f4b0c7a1ea8d86c1dfd96478ca12ad1360903d9d/core/math/math_funcs.h#L342-L362
+         */
+
+        const EPSILON: f64 = 0.00001;
+        
+        if self == other {
+			return true;
+		}
+    
+        let     epsilon:   Self = Self::from(EPSILON).unwrap();
+        let mut tolerance: Self = epsilon * self.abs();
+		if tolerance < epsilon {
+			tolerance = epsilon;
+		}
+		(self - other).abs() < tolerance
+    }
+}
 
 /// Adds some additional operations featured in rust that are not available in the standard PrimInt trait for some odd reason.
 pub trait IntUnique<T: IntScalar<T>> {
@@ -143,7 +185,7 @@ pub trait IntUnique<T: IntScalar<T>> {
 impl <T: Clone + Copy + Num + Default + PartialOrd + Display + Debug + NumCast> Scalar for T {}
 impl <T: Scalar + Ord + PrimInt + IntUnique<T>> IntScalar<T> for T {}
 impl <T: Scalar + Signed> SignedScalar for T {}
-impl <T: SignedScalar + Float + FloatConst + RelativeEq + AbsDiffEq<Epsilon = Self>> FloatScalar for T {}
+impl <T: SignedScalar + Float + FloatConst> FloatScalar for T {}
 
 impl IntUnique<u8> for u8 {
     fn ilog(self, base: u8) -> u8 {

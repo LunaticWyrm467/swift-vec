@@ -27,8 +27,9 @@ mod r2d;
 
 use core::fmt::{ self, Debug, Display, Formatter };
 
+use crate::vectorized::Vectorized;
 use crate::scalar::{ Scalar, FloatScalar, SignedScalar };
-use crate::vector::{ FloatVector, SignedVector, Vector, VectorAbstract, Vectorized };
+use crate::vector::{ FloatVector, SignedVector, Vector, VectorAbstract };
 
 pub use r2d::{ Side2, Rect2 };
 
@@ -237,7 +238,7 @@ pub trait SignedRect<T: SignedScalar + Vectorized<T, V>, V: SignedVector<T, V, A
     }
 }
 
-pub trait FloatRect<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>, R: FloatRect<T, V, R, A, S>, A, S>: SignedRect<T, V, R, A, S> {
+pub trait FloatRect<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A, C>, R: FloatRect<T, V, R, A, S, C>, A, S, C: Vectorized<T, V>>: SignedRect<T, V, R, A, S> {
 
     /// Returns whether this rectangle is approximately equal to another.
     fn approx_eq(&self, other: &R) -> bool {

@@ -24,20 +24,21 @@
 //!
 
 mod v2d;
+mod v3d;
 
 use core::{
-    ops::{ Add, Sub, Mul, Div, Rem, Neg, AddAssign, SubAssign, MulAssign, DivAssign, RemAssign },
+    ops::{ Add, Sub, Mul, Div, Rem, Neg, AddAssign, SubAssign, MulAssign, DivAssign, RemAssign, Index, IndexMut },
     f32::consts::FRAC_PI_2,
-    fmt::{ Debug, Display }
+    fmt::{ self, Debug, Display }
 };
 
 #[cfg(feature = "alloc")]
 use alloc::{ vec::Vec, vec };
 
-use approx::relative_eq;
-
-use crate::scalar::{ Scalar, FloatScalar, SignedScalar, IntScalar };
-pub use v2d::{ Axis2, Vec2 };
+    use crate::vectorized::Vectorized;
+    use crate::scalar::{ Scalar, FloatScalar, SignedScalar, IntScalar };
+pub use v2d::{ Axis2, Vec2, Vectorized2D };
+pub use v3d::{ Axis3, Vec3, Vectorized3D };
 
 
 /*
@@ -64,9 +65,6 @@ pub trait Vector<T: Scalar + Vectorized<T, V>, V: Vector<T, V, A>, A>: VectorAbs
 
     /// Returns the rank or dimension of the vector.
     fn rank() -> usize;
-
-    /// Gets the value at the specified axis.
-    fn get(&self, axis: A) -> T;
 
     /// Converts the vector into a `Vec<T>`.
     #[cfg(feature = "alloc")]
@@ -129,22 +127,18 @@ pub trait IntVector<T: IntScalar<T> + Vectorized<T, V>, V: IntVector<T, V, A>, A
     fn log<I: Vectorized<T, V>>(&self, base: I) -> V;
 }
 
-pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>, A>: SignedVector<T, V, A> {
+pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A, C>, A, C: Vectorized<T, V>>: SignedVector<T, V, A> {
 
     //=====// Trigonometry //=====//
     /// Calculates the angle to another vector.
     /// # Returns
     /// The angle in radians.
     fn angle_to(&self, other: V) -> T {
-        -(self.cross(other)).atan2(self.dot(other))
-    }
-
-    /// Rotates this vector by a given angle in radians.
-    fn rotated(&self, angle: T) -> V;
-
-    /// Rotates this vector by 90 degrees counter clockwise.
-    fn orthogonal(&self) -> V {
-        self.rotated(T::from(FRAC_PI_2).unwrap())
+        let cross: C = self.cross(other);
+        match cross.attempt_get_scalar() {
+            Some(cross_scalar) => -cross_scalar.atan2(self.dot(other)),
+            None               => -cross.dvec().length().atan2(self.dot(other))
+        }
     }
 
     /// Converts this vector to radians.
@@ -220,6 +214,17 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>
         self.magnitude()
     }
 
+    /// Calculates the inverse magnitude of a vector.
+    fn inv_magnitude(&self) -> T {
+        self.identity().dot(self.identity()).inv_sqrt()
+    }
+
+    /// Calculates the inverse length of a vector.
+    /// This is just an alias to `inv_magnitude`.
+    fn inv_length(&self) -> T {
+        self.inv_magnitude()
+    }
+
     /// Limits the magnitude or length of the vector to a certain value.
     fn limit(&self, limit: T) -> V {
         
@@ -235,7 +240,7 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>
 
     /// Normalizes the vector to a length of 1.
     fn normalized(&self) -> V {
-        self.identity() / self.magnitude()
+        self.identity() * self.inv_magnitude()
     }
 
     /// Derives the unit vector from this vector.
@@ -275,9 +280,7 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>
         // If the discriminant is negative, then an internal reflection occurred.
         if discriminant < T::zero() {
             T::zero().dvec()
-        } else {
-
-            // Otherwise, compute and return the refraction using Snell's law.
+        } else {   // Otherwise, compute and return the refraction using Snell's law.
             (self.identity() * refraction_index) - (normals_normalized * (refraction_index * alignment + discriminant.sqrt()))
         }
     }
@@ -312,6 +315,10 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>
         identity + (other - identity) * t
     }
 
+    /// A `smoothstep` implementation similar to that of OpenGL's, which uses smooth Hermite
+    /// interpolation between the values `a` and `b` for `self.
+    fn smoothstep<I: Vectorized<T, V>>(&self, a: I, b: I) -> V;
+
     /// Calculates the derivative of the Bézier curve set by this vector and the given control and terminal points
     /// at position `t`.
     fn bezier_derivative(&self, control_1: V, control_2: V, terminal: V, t: T) -> V;
@@ -328,14 +335,6 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>
     /// This can be smoother than `cubic_interpolate` in certain instances.
     fn cubic_interpolate_in_time(&self, b: V, pre_a: V, post_b: V, weight: T, b_t: T, pre_a_t: T, post_b_t: T) -> V;
 
-    /// Spherically interpolates between two vectors.
-    /// This interpolation is focused on the length or magnitude of the vectors. If the magnitudes are equal,
-    /// the interpolation is linear and behaves the same way as `lerp()`.
-    fn slerp(&self, other: V, t: T) -> V {
-        let theta: T = self.angle_to(other);
-        self.rotated(theta * t)
-    }
-
     /// Returns the result of sliding a vector along a plane as defined by a normal vector.
     fn slide(&self, normal: V) -> V {
         self.identity() - (normal * self.dot(normal))
@@ -348,7 +347,7 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>
 
     /// Calculates the cross product of two vectors.
     /// Note: in 2D vectors, the cross product is the z-component of the 3D cross product of the vectors broadcasted to 3D.
-    fn cross(&self, other: V) -> T;
+    fn cross(&self, other: V) -> C;
 
     /// Projects this vector onto another vector.
     fn project(&self, other: V) -> V {
@@ -365,6 +364,11 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>
     //=====// Operations //=====//
     /// Calculates the square root of the vector.
     fn sqrt(&self) -> V;
+
+    /// Calculates the inverse square root of the vector.
+    fn inv_sqrt(&self) -> V {
+        T::one().dvec() / self.sqrt()
+    }
 
     /// Calculates the square of the vector through multiplication.
     fn sqr(&self) -> V;
@@ -400,6 +404,11 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>
         self.identity() - diff
     }
 
+    /// Modulates a value so that it stays between 0-1.
+    fn fract(&self) -> V {
+        self.identity() - self.floor()
+    }
+
     /// Determines if the vector is approximately equal to another vector.
     fn approx_eq(&self, other: V) -> bool;
 
@@ -417,8 +426,7 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>
 
     /// Returns whether this vector is normalized.
     fn is_normalized(&self) -> bool {
-        let magnitude: T = self.magnitude();
-        relative_eq!(magnitude, T::one(), epsilon = T::epsilon())
+        self.magnitude().approx_eq(T::one())
     }
 
     /// Returns if this vector is approximately zero.
@@ -426,17 +434,3 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>
         self.approx_eq(T::zero().dvec())
     }
 }
-
-
-/*
-    Vectorized
-        Trait
-*/
-
-
-pub trait Vectorized<T: Scalar + Vectorized<T, V>, V: VectorAbstract<T, V>> {
-    
-    /// Converts a type or tuple of types to a suitable Vector representation.
-    fn dvec(self) -> V;
-}
-
