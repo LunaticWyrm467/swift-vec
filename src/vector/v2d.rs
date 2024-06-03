@@ -213,18 +213,18 @@ impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2> for Vec2<T> {
             self.y().bezier_sample(control_1.y(), control_2.y(), terminal.y(), t)
         )
     }
-
-    fn cubic_interpolate(&self, terminal: Vec2<T>, pre_start: Vec2<T>, post_terminal: Vec2<T>, t: T) -> Vec2<T> {
+    
+    fn cubic_interpolate(&self, b: Vec2<T>, pre_a: Vec2<T>, post_b: Vec2<T>, weight: T) -> Vec2<T> {
         Vec2(
-            self.x().cubic_interpolate(terminal.x(), pre_start.x(), post_terminal.x(), t),
-            self.y().cubic_interpolate(terminal.y(), pre_start.y(), post_terminal.y(), t)
+            self.x().cubic_interpolate(b.x(), pre_a.x(), post_b.x(), weight),
+            self.y().cubic_interpolate(b.y(), pre_a.y(), post_b.y(), weight)
         )
     }
-
-    fn cubic_interpolate_in_time(&self, terminal: Vec2<T>, pre_start: Vec2<T>, post_terminal: Vec2<T>, t0: T, terminal_t: T, pre_start_t: T, post_terminal_t: T) -> Vec2<T> {
+    
+    fn cubic_interpolate_in_time(&self, b: Vec2<T>, pre_a: Vec2<T>, post_b: Vec2<T>, weight: T, b_t: T, pre_a_t: T, post_b_t: T) -> Vec2<T> {
         Vec2(
-            self.x().cubic_interpolate_in_time(terminal.x(), pre_start.x(), post_terminal.x(), t0, terminal_t, pre_start_t, post_terminal_t),
-            self.y().cubic_interpolate_in_time(terminal.y(), pre_start.y(), post_terminal.y(), t0, terminal_t, pre_start_t, post_terminal_t)
+            self.x().cubic_interpolate_in_time(b.x(), pre_a.x(), post_b.x(), weight, b_t, pre_a_t, post_b_t),
+            self.y().cubic_interpolate_in_time(b.y(), pre_a.y(), post_b.y(), weight, b_t, pre_a_t, post_b_t)
         )
     }
 

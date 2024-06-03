@@ -87,7 +87,7 @@ pub trait SignedScalar: Scalar + Signed {
 
     /// Calculates and samples the cubic interpolation between this scalar and another
     /// given `pre_start` and `post_terminal` scalars as handles, and a given `t` value.
-    fn cubic_interpolate(self, terminal: Self, pre_start: Self, post_terminal: Self, t: Self) -> Self {
+    fn cubic_interpolate(self, b: Self, pre_a: Self, post_b: Self, weight: Self) -> Self {
 
         // Define some commonly used constants.
         let t_05: Self = Self::from(0.5).unwrap();
@@ -99,15 +99,15 @@ pub trait SignedScalar: Scalar + Signed {
         // Derived from https://github.com/godotengine/godot/blob/1952f64b07b2a0d63d5ba66902fd88190b0dcf08/core/math/math_funcs.h#L275
         t_05 * (
             (self * t_2) +
-            (-pre_start + terminal) * t +
-            (t_2 * pre_start - t_5 * self + t_4 * terminal - post_terminal) * (t * t) +
-            (-pre_start + t_3 * self - t_3 * terminal + post_terminal) * (t * t * t)
+            (-pre_a + b) * weight +
+            (t_2 * pre_a - t_5 * self + t_4 * b - post_b) * (weight * weight) +
+            (-pre_a + t_3 * self - t_3 * b + post_b) * (weight * weight * weight)
         )
     }
 
     /// Similar to `cubic_interpolate`, but it has additional time parameters `terminal_t`, `pre_start_t`, and `post_terminal_t`.
     /// This can be smoother than `cubic_interpolate` in certain instances.
-    fn cubic_interpolate_in_time(self, terminal: Self, pre_start: Self, post_terminal: Self, t0: Self, terminal_t: Self, pre_start_t: Self, post_terminal_t: Self) -> Self {
+    fn cubic_interpolate_in_time(self, b: Self, pre_a: Self, post_b: Self, weight: Self, b_t: Self, pre_a_t: Self, post_b_t: Self) -> Self {
 
         // Define some commonly used constants.
         let t_0:  Self = Self::zero();
@@ -115,13 +115,13 @@ pub trait SignedScalar: Scalar + Signed {
         let t_1:  Self = Self::one();
         
         // Formula of the Barry-Goldman method.
-        let t:  Self = t_0.lerp(terminal_t, t0);
-        let a1: Self = pre_start.lerp(self, if pre_start_t == t_0 { t_0 } else { (t - pre_start_t) / -pre_start_t });
-        let a2: Self = self.lerp(terminal, if terminal_t == t_0 { t_05 } else { t / terminal_t });
-        let a3: Self = terminal.lerp(post_terminal, if post_terminal_t - terminal_t == t_0 { t_1 } else { (t - terminal_t) / (post_terminal_t - terminal_t) });
-        let b1: Self = a1.lerp(a2, if terminal_t - pre_start_t == t_0 { t_0 } else { (t - pre_start_t) / (terminal_t - pre_start_t) });
-        let b2: Self = a2.lerp(a3, if post_terminal_t == t_0 { t_1 } else { t / post_terminal_t });
-        b1.lerp(b2, if terminal_t == t_0 { t_05 } else { t / terminal_t })
+        let t:  Self = t_0.lerp(b_t, weight);
+        let a1: Self = pre_a.lerp(self, if pre_a_t == t_0 { t_0 } else { (t - pre_a_t) / -pre_a_t });
+        let a2: Self = self.lerp(b, if b_t == t_0 { t_05 } else { t / b_t });
+        let a3: Self = b.lerp(post_b, if post_b_t - b_t == t_0 { t_1 } else { (t - b_t) / (post_b_t - b_t) });
+        let b1: Self = a1.lerp(a2, if b_t - pre_a_t == t_0 { t_0 } else { (t - pre_a_t) / (b_t - pre_a_t) });
+        let b2: Self = a2.lerp(a3, if post_b_t == t_0 { t_1 } else { t / post_b_t });
+        b1.lerp(b2, if b_t == t_0 { t_05 } else { t / b_t })
     }
 }
 

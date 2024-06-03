@@ -322,11 +322,11 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A>
 
     /// Calculates and samples the cubic interpolation between this vector and another
     /// given `pre_start` and `post_terminal` vectors as handles, and a given `t` value.
-    fn cubic_interpolate(&self, terminal: V, pre_start: V, post_terminal: V, t: T) -> V;
+    fn cubic_interpolate(&self, b: V, pre_a: V, post_b: V, weight: T) -> V;
 
     /// Similar to `cubic_interpolate`, but it has additional time parameters `terminal_t`, `pre_start_t`, and `post_terminal_t`.
     /// This can be smoother than `cubic_interpolate` in certain instances.
-    fn cubic_interpolate_in_time(&self, terminal: V, pre_start: V, post_terminal: V, t0: T, terminal_t: T, pre_start_t: T, post_terminal_t: T) -> V;
+    fn cubic_interpolate_in_time(&self, b: V, pre_a: V, post_b: V, weight: T, b_t: T, pre_a_t: T, post_b_t: T) -> V;
 
     /// Spherically interpolates between two vectors.
     /// This interpolation is focused on the length or magnitude of the vectors. If the magnitudes are equal,
