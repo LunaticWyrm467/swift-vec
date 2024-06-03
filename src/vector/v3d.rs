@@ -488,7 +488,7 @@ impl <T: FloatScalar> Vec3<T> {
         let     f: Vec2<T> = Vec2(encoded[X2] * t_2 - T::one(), encoded[Y2] * t_2 - T::one());
         let mut n: Vec3<T> = Vec3(f[X2], f[Y2], T::one() - f[X2].abs() - f[Y2].abs());
         
-        let t: T = -n[Z].clamp(T::zero(), T::one());
+        let t: T = Scalar::clamp(-n[Z], T::zero(), T::one());
         n[X] = n[X] + (if n[X] >= T::zero() { -t } else { t });
         n[Y] = n[Y] + (if n[Y] >= T::zero() { -t } else { t });
         n.normalized()

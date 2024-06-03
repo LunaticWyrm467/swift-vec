@@ -143,7 +143,7 @@ pub trait FloatScalar: SignedScalar + Float + FloatConst {
         let t_2: Self = Self::from(2).unwrap();
         let t_3: Self = Self::from(3).unwrap();
 
-        let y: Self = (self - a) / Self::clamp(b - a, Self::zero(), Self::one());
+        let y: Self = (self - a) / Scalar::clamp(b - a, Self::zero(), Self::one());
 	    y * y * (t_3 - (t_2 * y))
     }
 
