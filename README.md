@@ -8,7 +8,7 @@
 of functionality for game development, physics simulations, and other potential use cases.
 
 **⚠️WARNING⚠️**<br>
-This crate is in its infancy! 3D and 4D vectors are missing, along with other planned functionality.
+This crate is in its infancy! 4D vectors are missing, along with other planned functionality.
 Beware of bugs!
 
 ## Getting Started!
