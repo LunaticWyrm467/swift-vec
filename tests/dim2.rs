@@ -8,10 +8,10 @@ fn vec2_angle_to() {
     use swift_vec::vector::Vec2;
     
     // Create four directional vectors
-    let up:    Vec2<f32> = Vec2::up();
-    let down:  Vec2<f32> = Vec2::down();
-    let left:  Vec2<f32> = Vec2::left();
-    let right: Vec2<f32> = Vec2::right();
+    let up:    Vec2<f32> = Vec2::UP;
+    let down:  Vec2<f32> = Vec2::DOWN;
+    let left:  Vec2<f32> = Vec2::LEFT;
+    let right: Vec2<f32> = Vec2::RIGHT;
 
     // Test the angle between the vectors
     assert!(up.angle_to(up).approx_eq(0.0));
@@ -26,10 +26,10 @@ fn vec2_rotate() {
 
     // Create a northbound vector and rotate the vector 90 degrees counterclockwise.
     // Check that the vector is now westbound.
-    let north:   Vec2<f64> = Vec2::up();
+    let north:   Vec2<f64> = Vec2::UP;
     let rotated: Vec2<f64> = north.rotated(f64consts::FRAC_PI_2);
 
-    assert!(rotated.approx_eq(Vec2::left()));
+    assert!(rotated.approx_eq(Vec2::LEFT));
 
     // Create a vector from the rotation of 180 degrees and rotate the vector 90 degrees clockwise.
     // Check that the vector is now of a 90 degree angle.

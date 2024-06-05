@@ -185,7 +185,7 @@ impl <T: Scalar> Rect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {
     }
 }
 
-impl <T: SignedScalar> SignedRect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {}
+impl <T: SignedScalar> SignedRect<T, Vec2<T>, Rect2<T>, Axis2, Side2, T> for Rect2<T> {}
 
 impl <T: FloatScalar> FloatRect<T, Vec2<T>, Rect2<T>, Axis2, Side2, T> for Rect2<T> {}
 

@@ -91,6 +91,9 @@ pub struct Vec2<T: Scalar>(pub T, pub T);
 impl <T: Scalar> VectorAbstract<T, Vec2<T>> for Vec2<T> {}
 
 impl <T: Scalar> Vector<T, Vec2<T>, Axis2> for Vec2<T>  {
+    const ZERO: Vec2<T> = Vec2(T::ZERO, T::ZERO);
+    const ONE:  Vec2<T> = Vec2(T::ONE,  T::ONE );
+
     fn identity(&self) -> Vec2<T> {
         *self
     }
@@ -110,6 +113,10 @@ impl <T: Scalar> Vector<T, Vec2<T>, Axis2> for Vec2<T>  {
 
     fn product(&self) -> T {
         self[X] * self[Y]
+    }
+    
+    fn dot(&self, other: Vec2<T>) -> T {
+        self[X] * other[X] + self[Y] * other[Y]
     }
 
     fn argmax(&self) -> Axis2 {
@@ -149,13 +156,17 @@ impl <T: Scalar> Vector<T, Vec2<T>, Axis2> for Vec2<T>  {
     }
 }
 
-impl <T: SignedScalar> SignedVector<T, Vec2<T>, Axis2> for Vec2<T> {
+impl <T: SignedScalar> SignedVector<T, Vec2<T>, Axis2, T> for Vec2<T> {
     fn signum(&self) -> Vec2<T> {
         Vec2(self[X].signum(), self[Y].signum())
     }
 
     fn abs(&self) -> Vec2<T> {
         Vec2(self[X].abs(), self[Y].abs())
+    }
+
+    fn cross(&self, other: Vec2<T>) -> T {
+        self[X] * other[Y] - self[Y] * other[X]
     }
 }
 
@@ -246,19 +257,11 @@ impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2, T> for Vec2<T> {
         )
     }
 
-    fn dot(&self, other: Vec2<T>) -> T {
-        self[X] * other[X] + self[Y] * other[Y]
-    }
-
-    fn cross(&self, other: Vec2<T>) -> T {
-        self[X] * other[Y] - self[Y] * other[X]
-    }
-
     fn sqrt(&self) -> Vec2<T> {
         Vec2(self[X].sqrt(), self[Y].sqrt())
     }
 
-    fn sqr(&self) -> Vec2<T> {
+    fn pow2(&self) -> Vec2<T> {
         Vec2(self[X] * self[X], self[Y] * self[Y])
     }
 
@@ -291,15 +294,13 @@ impl <T: FloatScalar> FloatVector<T, Vec2<T>, Axis2, T> for Vec2<T> {
 
 impl <T: Scalar> Vec2<T> {
     
-    /// Initializes a `Vec2` that describes an upwards direction.
-    pub fn up() -> Vec2<T> {
-        Vec2(T::zero(), T::one())
-    }
+    /// A `Vec2` that describes an upwards direction:
+    /// `Vec2(0, 1)`.
+    pub const UP: Vec2<T> = Vec2(T::ZERO, T::ONE);
     
-    /// Initializes a `Vec2` that describes a rightwards direction.
-    pub fn right() -> Vec2<T> {
-        Vec2(T::one(), T::zero())
-    }
+    /// A `Vec2` that describes a rightwards direction:
+    /// `Vec2(1, 0)`.
+    pub const RIGHT: Vec2<T> = Vec2(T::ONE, T::ZERO);
 
     /// Initializes a `Vec2` that describes a plotted point along the x axis.
     pub fn on_x(x: T) -> Vec2<T> {
@@ -348,15 +349,13 @@ impl <T: Scalar> Vec2<T> {
 
 impl <T: SignedScalar> Vec2<T> {
 
-    /// Initializes a `Vec2` that describes a downwards direction.
-    pub fn down() -> Vec2<T> {
-        Vec2(T::zero(), -T::one())
-    }
+    /// A `Vec2` that describes a downwards direction:
+    /// `Vec2(0, -1)`.
+    pub const DOWN: Vec2<T> = Vec2(T::ZERO, T::NEG_ONE);
 
-    /// Initializes a `Vec2` that describes a leftwards direction.
-    pub fn left() -> Vec2<T> {
-        Vec2(-T::one(), T::zero())
-    }
+    /// A `Vec2` that describes a leftwards direction.
+    /// `Vec2(-1, 0)`.
+    pub const LEFT: Vec2<T> = Vec2(T::NEG_ONE, T::ZERO);
 }
 
 impl <T: FloatScalar> Vec2<T> {

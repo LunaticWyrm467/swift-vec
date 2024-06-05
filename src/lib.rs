@@ -30,6 +30,7 @@ extern crate alloc;
 /// While you can import from this module, scalar traits will automatically be imported from the `prelude` module.
 pub mod scalar;
 pub mod vector;
+pub mod mat;
 pub mod rect;
 
 /// Generally speaking, you'll want to use the prelude module to get all of the traits and functions you'll need.

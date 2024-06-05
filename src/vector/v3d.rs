@@ -23,6 +23,7 @@
 //! for any of the non-shared behaviours of the 3D vector.
 //!
 
+use crate::mat::Mat3;
 use super::Axis2::{ X as X2, Y as Y2 };
 use super::*;
 
@@ -49,9 +50,9 @@ impl Axis3 {
     /// Gets a normalized `Vec3` representing this axis.
     pub fn to_vec3<T: Scalar>(&self) -> Vec3<T> {
         match self {
-            X    => Vec3(T::one(),  T::zero(), T::zero()),
-            Y    => Vec3(T::zero(), T::one(),  T::zero()),
-            Z    => Vec3(T::zero(), T::zero(), T::one()),
+            X      => Vec3(T::one(),  T::zero(), T::zero()),
+            Y      => Vec3(T::zero(), T::one(),  T::zero()),
+            Z      => Vec3(T::zero(), T::zero(), T::one()),
             NoAxis => Vec3(T::zero(), T::zero(), T::zero())
         }
     }
@@ -80,6 +81,32 @@ impl <T: Scalar> IndexMut<Axis3> for Vec3<T> {
     }
 }
 
+/// Simply represents a positive or negative axis of a 3-dimensional graph or plane.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SignedAxis3 {
+    XPos,
+    YPos,
+    ZPos,
+    XNeg,
+    YNeg,
+    ZNeg
+}
+
+impl SignedAxis3 {
+
+    /// Gets a normalized `Vec3` representing this axis.
+    pub fn to_vec3<T: SignedScalar>(&self) -> Vec3<T> {
+        match self {
+            SignedAxis3::XPos =>  Vec3(T::one(),  T::zero(), T::zero()),
+            SignedAxis3::YPos =>  Vec3(T::zero(), T::one(),  T::zero()),
+            SignedAxis3::ZPos =>  Vec3(T::zero(), T::zero(), T::one()),
+            SignedAxis3::XNeg => -Vec3(T::one(),  T::zero(), T::zero()),
+            SignedAxis3::YNeg => -Vec3(T::zero(), T::one(),  T::zero()),
+            SignedAxis3::ZNeg => -Vec3(T::zero(), T::zero(), T::one()),
+        }
+    }
+}
+
 
 /*
     3D Vector
@@ -96,6 +123,9 @@ pub struct Vec3<T: Scalar>(pub T, pub T, pub T);
 impl <T: Scalar> VectorAbstract<T, Vec3<T>> for Vec3<T> {}
 
 impl <T: Scalar> Vector<T, Vec3<T>, Axis3> for Vec3<T>  {
+    const ZERO: Vec3<T> = Vec3(T::ZERO, T::ZERO, T::ZERO);
+    const ONE:  Vec3<T> = Vec3(T::ONE,  T::ONE,  T::ONE );
+
     fn identity(&self) -> Vec3<T> {
         *self
     }
@@ -115,6 +145,10 @@ impl <T: Scalar> Vector<T, Vec3<T>, Axis3> for Vec3<T>  {
 
     fn product(&self) -> T {
         self[X] * self[Y] * self[Z]
+    }
+
+    fn dot(&self, other: Vec3<T>) -> T {
+        self[X] * other[X] + self[Y] * other[Y] + self[Z] * other[Z]
     }
 
     fn argmax(&self) -> Axis3 {
@@ -158,13 +192,21 @@ impl <T: Scalar> Vector<T, Vec3<T>, Axis3> for Vec3<T>  {
     }
 }
 
-impl <T: SignedScalar> SignedVector<T, Vec3<T>, Axis3> for Vec3<T> {
+impl <T: SignedScalar> SignedVector<T, Vec3<T>, Axis3, Vec3<T>> for Vec3<T> {
     fn signum(&self) -> Vec3<T> {
         Vec3(self[X].signum(), self[Y].signum(), self[Z].signum())
     }
 
     fn abs(&self) -> Vec3<T> {
         Vec3(self[X].abs(), self[Y].abs(), self[Z].signum())
+    }
+
+    fn cross(&self, other: Vec3<T>) -> Vec3<T> {
+        Vec3(
+            self[Y] * other[Z] - self[Z] * other[Y],
+            self[Z] * other[X] - self[X] * other[Z],
+            self[X] * other[Y] - self[Y] * other[X]
+        )
     }
 }
 
@@ -260,23 +302,11 @@ impl <T: FloatScalar> FloatVector<T, Vec3<T>, Axis3, Vec3<T>> for Vec3<T> {
         )
     }
 
-    fn dot(&self, other: Vec3<T>) -> T {
-        self[X] * other[X] + self[Y] * other[Y] + self[Z] * other[Z]
-    }
-
-    fn cross(&self, other: Vec3<T>) -> Vec3<T> {
-        Vec3(
-            self[Y] * other[Z] - self[Z] * other[Y],
-            self[Z] * other[X] - self[X] * other[Z],
-            self[X] * other[Y] - self[Y] * other[X]
-        )
-    }
-
     fn sqrt(&self) -> Vec3<T> {
         Vec3(self[X].sqrt(), self[Y].sqrt(), self[Z].sqrt())
     }
 
-    fn sqr(&self) -> Vec3<T> {
+    fn pow2(&self) -> Vec3<T> {
         Vec3(self[X] * self[X], self[Y] * self[Y], self[Z] * self[Z])
     }
 
@@ -309,20 +339,19 @@ impl <T: FloatScalar> FloatVector<T, Vec3<T>, Axis3, Vec3<T>> for Vec3<T> {
 
 impl <T: Scalar> Vec3<T> {
     
-    /// Initializes a `Vec3` that describes a forwards direction.
-    pub fn forward() -> Vec3<T> {
-        Vec3(T::zero(), T::zero(), T::one())
-    }
+    /// A `Vec3` that describes a backwards direction:
+    /// `Vec3(0, 0, 1)`.
+    /// # Note
+    /// Backwards is considered the positive Z axis by default.
+    pub const BACK: Vec3<T> = Vec3(T::ZERO, T::ZERO, T::ONE);
     
-    /// Initializes a `Vec3` that describes an upwards direction.
-    pub fn up() -> Vec3<T> {
-        Vec3(T::zero(), T::one(), T::zero())
-    }
+    /// A `Vec3` that describes an upwards direction:
+    /// `Vec3(0, 1, 0)`.
+    pub const UP: Vec3<T> = Vec3(T::ZERO, T::ONE, T::ZERO);
     
-    /// Initializes a `Vec3` that describes a rightwards direction.
-    pub fn right() -> Vec3<T> {
-        Vec3(T::one(), T::zero(), T::zero())
-    }
+    /// A `Vec3` that describes a rightwards direction:
+    /// `Vec3(1, 0, 0)`.
+    pub const RIGHT: Vec3<T> = Vec3(T::ONE, T::ZERO, T::ZERO);
 
     /// Initializes a `Vec3` that describes a plotted point along the x axis.
     pub fn on_x(x: T) -> Vec3<T> {
@@ -406,42 +435,87 @@ impl <T: Scalar> Vec3<T> {
 
 impl <T: SignedScalar> Vec3<T> {
     
-    /// Initializes a `Vec3` that describes a backwards direction.
-    pub fn back() -> Vec3<T> {
-        Vec3(T::zero(), T::zero(), -T::one())
-    }
+    /// A `Vec3` that describes a forwards direction:
+    /// `Vec3(0, 0, -1)`.
+    /// # Note
+    /// Forwards is considered the negative Z axis by default.
+    pub const FORWARD: Vec3<T> = Vec3(T::ZERO, T::ZERO, T::NEG_ONE);
 
-    /// Initializes a `Vec3` that describes a downwards direction.
-    pub fn down() -> Vec3<T> {
-        Vec3(T::zero(), -T::one(), T::zero())
-    }
+    /// A `Vec3` that describes a downwards direction:
+    /// `Vec3(0, -1, 0)`.
+    pub const DOWN: Vec3<T> = Vec3(T::ZERO, T::NEG_ONE, T::ZERO);
 
-    /// Initializes a `Vec3` that describes a leftwards direction.
-    pub fn left() -> Vec3<T> {
-        Vec3(-T::one(), T::zero(), T::zero())
-    }
+    /// A `Vec3` that describes a leftwards direction:
+    /// `Vec3(-1, 0, 0)`.
+    pub const LEFT: Vec3<T> = Vec3(T::NEG_ONE, T::ZERO, T::ZERO);
 }
 
 impl <T: FloatScalar> Vec3<T> {
     
-    /// Returns the signed angle to this vector in radians.
+    /// Returns the signed angle from this vector to another in radians.
     /// The sign of the angle returned is positive in the angle is in a counter-clockwise
     /// direction or negative if not.
     /// The `axis` is the viewing angle relative to the angle's direction.
-    pub fn signed_angle_to(&self, _axis: Axis3) -> Vec3<T> {
-        todo!()
+    pub fn signed_angle_to(&self, other: Vec3<T>, axis: SignedAxis3) -> T {
+        self.signed_angle_to_free(other, axis.to_vec3())
+    }
+    
+    /// Returns the signed angle from this vector to another in radians.
+    /// The sign of the angle returned is positive in the angle is in a counter-clockwise
+    /// direction or negative if not.
+    /// The `axis` is the viewing angle relative to the angle's direction.
+    /// Compared to `signed_angle_to`, this function gives you the freedom to specify a custom Axis
+    /// vector.
+    pub fn signed_angle_to_free(&self, other: Vec3<T>, axis: Vec3<T>) -> T {
+        let cross_to:       Vec3<T> = self.cross(other);
+        let unsigned_angle: T       = cross_to.length().atan2(self.dot(other));
+        let sign:           T       = cross_to.dot(axis);
+        
+        if sign < T::zero() { -unsigned_angle } else { unsigned_angle }
     }
 
     /// Rotates this vector by a given angle in radians across a given Axis.
-    pub fn rotated(&self, angle: T, axis: Axis3) -> Vec3<T> {
+    pub fn rotated(&self, angle: T, axis: SignedAxis3) -> Vec3<T> {
         self.rotated_free(angle, axis.to_vec3())
     }
     
     /// Rotates this vector by a given angle in radians across a given Axis.
     /// Compared to `rotated`, this function gives you the freedom to specify a custom Axis vector.
-    pub fn rotated_free(&self, _angle: T, _axis: Vec3<T>) -> Vec3<T> {
-        //Mat3::from_angle(axis, angle).xform(self)
-        todo!()
+    pub fn rotated_free(&self, angle: T, axis: Vec3<T>) -> Vec3<T> {
+        Mat3::from_angle_free(angle, axis).xform(*self)
+    }
+    
+    /// Spherically interpolates between two vectors.
+    /// This interpolation is focused on the length or magnitude of the vectors. If the magnitudes are equal,
+    /// the interpolation is linear and behaves the same way as `lerp()`.
+    pub fn slerp(&self, other: Vec3<T>, t: T) -> Vec3<T> {
+        
+        /*
+         * Ported from Godot
+         */
+
+        let start_length_sq: T = self.magnitude_squared();
+        let end_length_sq:   T = other.magnitude_squared();
+
+        // If the vectors have no length, then interpolate linearly.
+        if start_length_sq.approx_eq(T::zero()) || end_length_sq.approx_eq(T::zero()) {
+            return self.lerp(other, t);
+        }
+
+        let mut axis:           Vec3<T> = self.cross(other);
+        let     axis_length_sq: T       = axis.magnitude_squared();
+        
+        // Colinear vectors have no rotation axis or angle between them, so the best we can do is lerp.
+        if axis_length_sq.approx_eq(T::zero()) {
+            return self.lerp(other, t);
+        }
+        axis /= axis_length_sq.sqrt();
+        
+        let start_length:  T = start_length_sq.sqrt();
+        let result_length: T = start_length.lerp(end_length_sq.sqrt(), t);
+        let angle:         T = self.angle_to(other);
+        
+        self.rotated_free(angle * t, axis) * (result_length / start_length)
     }
 
     /// Encodes this `Vec3` into a `Vec2` via Octahedral Encoding.
@@ -494,10 +568,14 @@ impl <T: FloatScalar> Vec3<T> {
         n.normalized()
     }
 
-    /*/// Returns the outer product of this vector.
-    pub fn outer(&self) -> Mat3<T> {
-        todo!()
-    }*/
+    /// Returns the outer product of this vector with another.
+    pub fn outer(&self, other: Vec3<T>) -> Mat3<T> {
+        Mat3 {
+            x: Vec3(self[X] * other[X], self[X] * other[Y], self[X] * other[Z]),
+            y: Vec3(self[Y] * other[X], self[Y] * other[Y], self[Y] * other[Z]),
+            z: Vec3(self[Z] * other[X], self[Z] * other[Y], self[Z] * other[Z])
+        }
+    }
 }
 
 
@@ -643,6 +721,62 @@ impl <T: Scalar> Rem<&Vec3<T>> for Vec3<T> {
 
 /*
     Global Operations
+        Base vs Mat3 Arithmetic
+*/
+
+
+impl <T: Scalar> Mul<Mat3<T>> for Vec3<T> {
+    type Output = Vec3<T>;
+    fn mul(self, rhs: Mat3<T>) -> Self::Output {
+        rhs.inv_xform(self)
+    }
+}
+
+
+/*
+    Global Operations
+        Reference vs Mat3 Arithmetic
+*/
+
+
+impl <T: Scalar> Mul<Mat3<T>> for &Vec3<T> {
+    type Output = Vec3<T>;
+    fn mul(self, rhs: Mat3<T>) -> Self::Output {
+        rhs.inv_xform(*self)
+    }
+}
+
+
+/*
+    Global Operations
+        Base vs Reference Mat3 Arithmetic
+*/
+
+
+impl <T: Scalar> Mul<&Mat3<T>> for Vec3<T> {
+    type Output = Vec3<T>;
+    fn mul(self, rhs: &Mat3<T>) -> Self::Output {
+        rhs.inv_xform(self)
+    }
+}
+
+
+/*
+    Global Operations
+        Reference vs Reference Mat3 Arithmetic
+*/
+
+
+impl <T: Scalar> Mul<&Mat3<T>> for &Vec3<T> {
+    type Output = Vec3<T>;
+    fn mul(self, rhs: &Mat3<T>) -> Self::Output {
+        rhs.inv_xform(*self)
+    }
+}
+
+
+/*
+    Global Operations
         Base vs Scalar Arithmetic
 */
 
@@ -776,7 +910,7 @@ impl <T: Scalar> Default for Vec3<T> {
 
 impl <T: Scalar> Display for Vec3<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Vec2({}, {}, {})", self.0, self.1, self.2)
+        write!(f, "Vec3({}, {}, {})", self.0, self.1, self.2)
     }
 }
 

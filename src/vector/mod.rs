@@ -38,7 +38,7 @@ use alloc::{ vec::Vec, vec };
     use crate::vectorized::Vectorized;
     use crate::scalar::{ Scalar, FloatScalar, SignedScalar, IntScalar };
 pub use v2d::{ Axis2, Vec2, Vectorized2D };
-pub use v3d::{ Axis3, Vec3, Vectorized3D };
+pub use v3d::{ Axis3, SignedAxis3, Vec3, Vectorized3D };
 
 
 /*
@@ -58,6 +58,12 @@ where
 {}
 
 pub trait Vector<T: Scalar + Vectorized<T, V>, V: Vector<T, V, A>, A>: VectorAbstract<T, V> {
+    
+    /// A vector with all of its fields set to zero.
+    const ZERO: V;
+    
+    /// A vector with all of its fields set to one.
+    const ONE: V;
 
     //=====// Getters //=====//
     /// A simple identity function. Useful for trait implementations where trait bounds need to be kept.
@@ -77,6 +83,9 @@ pub trait Vector<T: Scalar + Vectorized<T, V>, V: Vector<T, V, A>, A>: VectorAbs
 
     /// Calculates the product of the vector.
     fn product(&self) -> T;
+    
+    /// Calculates the dot product of two vectors.
+    fn dot(&self, other: V) -> T;
 
     /// Calculates the average of the vector.
     fn average(&self) -> T {
@@ -99,7 +108,7 @@ pub trait Vector<T: Scalar + Vectorized<T, V>, V: Vector<T, V, A>, A>: VectorAbs
     fn clamp<I: Vectorized<T, V>>(&self, min: I, max: I) -> V;
 }
 
-pub trait SignedVector<T: SignedScalar + Vectorized<T, V>, V: SignedVector<T, V, A>, A>: Vector<T, V, A>
+pub trait SignedVector<T: SignedScalar + Vectorized<T, V>, V: SignedVector<T, V, A, C>, A, C: Vectorized<T, V>>: Vector<T, V, A>
 where
     Self: Neg<Output = V> {
 
@@ -116,6 +125,10 @@ where
 
     /// Gets the absolute value of a vector.
     fn abs(&self) -> V;
+    
+    /// Calculates the cross product of two vectors.
+    /// Note: in 2D vectors, the cross product is the z-component of the 3D cross product of the vectors broadcasted to 3D.
+    fn cross(&self, other: V) -> C;
 }
 
 pub trait IntVector<T: IntScalar<T> + Vectorized<T, V>, V: IntVector<T, V, A>, A>: Vector<T, V, A> {
@@ -127,7 +140,7 @@ pub trait IntVector<T: IntScalar<T> + Vectorized<T, V>, V: IntVector<T, V, A>, A
     fn log<I: Vectorized<T, V>>(&self, base: I) -> V;
 }
 
-pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A, C>, A, C: Vectorized<T, V>>: SignedVector<T, V, A> {
+pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A, C>, A, C: Vectorized<T, V>>: SignedVector<T, V, A, C> {
 
     //=====// Trigonometry //=====//
     /// Calculates the angle to another vector.
@@ -200,7 +213,7 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A,
     /// Partially calculates the magnitude of the vector via the pythagorean theorem,
     /// but without applying the final step of squaring the value.
     fn magnitude_squared(&self) -> T {
-        self.sqr().sum()
+        self.pow2().sum()
     }
 
     /// Calculates the magnitude of a vector via the pythagorean theorem.
@@ -340,15 +353,7 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A,
         self.identity() - (normal * self.dot(normal))
     }
 
-
-    //=====// Linear Algebra //=====//
-    /// Calculates the dot product of two vectors.
-    fn dot(&self, other: V) -> T;
-
-    /// Calculates the cross product of two vectors.
-    /// Note: in 2D vectors, the cross product is the z-component of the 3D cross product of the vectors broadcasted to 3D.
-    fn cross(&self, other: V) -> C;
-
+    //=====// Operations //=====//
     /// Projects this vector onto another vector.
     fn project(&self, other: V) -> V {
         
@@ -360,8 +365,6 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A,
         unit * scalar_projection
     }
 
-
-    //=====// Operations //=====//
     /// Calculates the square root of the vector.
     fn sqrt(&self) -> V;
 
@@ -371,7 +374,7 @@ pub trait FloatVector<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A,
     }
 
     /// Calculates the square of the vector through multiplication.
-    fn sqr(&self) -> V;
+    fn pow2(&self) -> V;
 
     /// Raises the vector by a certain power.
     fn pow<I: Vectorized<T, V>>(&self, pow: I) -> V;

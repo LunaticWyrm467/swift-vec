@@ -17,11 +17,17 @@ or add `swift_vec = X.X` to your `cargo.toml` file.
 
 To show off some basic functionality of what this crate allows for;
 ```rust
+use core::f32::consts::TAU;
+
 use swift_vec::prelude::*;
-use swift_vec::vector::{ Vec2, Vec3, Axis2 };
+use swift_vec::vector::{ Vec2, Vec3, Mat3, Axis2, SignedAxis3 };
 use Axis2::*;   // It is recommended to import from the Axis enums if you're going to be
                 // indexing a lot.
 fn main() {
+    
+    /*
+     * Vectors!
+     */
 
     // Supports tuple destructuring and field indexing.
     let Vec2(x, y): Vec2<i32> = Vec2(1, 0);
@@ -40,7 +46,7 @@ fn main() {
     test_vec[X] = 2;   // You could always use tuple fields (`test_vec.0`) but this is more readable.
     test_vec[Y] = 3;
 
-    assert_eq!(argmax_axis, Axis2::X);
+    assert_eq!(argmax_axis, X);
     assert_eq!(argmax_val,  1);
     assert_eq!(test_vec,    Vec2(2, 3));
     
@@ -83,6 +89,59 @@ fn main() {
     assert!(c_025.approx_eq(Vec2(1.601563, 1.601563)));
     assert!(c_050.approx_eq(Vec2(1.8125,   1.8125  )));
     assert!(c_075.approx_eq(Vec2(1.867188, 1.867188)));
+
+    /*
+     * Matrices are also supported!
+     */
+
+    // Create a matrix from a scale.
+    let control: Mat3<u32> = Mat3::new(
+        2, 0, 0,
+        0, 4, 0,
+        0, 0, 8
+    );
+
+    let scale: Vec3<u32> = Vec3(2, 4, 8);
+    let mat:   Mat3<u32> = Mat3::from_scale(scale);
+
+    assert_eq!(mat, control);
+    
+    // Rotate the matrix.
+    // You can use `rotated_free()` to specify a custom axis.
+    let mut mat: Mat3<f32> = mat.cast().unwrap();
+            mat            = mat.rotated(TAU / 2.0, SignedAxis3::YPos);
+            mat            = mat.rotated(TAU / 4.0, SignedAxis3::XPos);
+    
+    assert!(mat.get_scale().approx_eq(Vec3(2.0, 4.0, 8.0)));
+    
+    // Matrix inversion is suppported.
+    let control: Mat3<f32> = Mat3::new(
+         0.452055,  0.041096, -0.39726,
+        -0.054795, -0.09589,   0.260274,
+        -0.041096,  0.178082, -0.054795
+    );
+    
+    let mat: Mat3<f32> = Mat3::new(
+        3.0, 5.0, 2.0,
+        1.0, 3.0, 7.0,
+        1.0, 6.0, 3.0
+    );
+    
+    assert!(mat.inverse().approx_eq(&control));
+
+    // So is normalization.
+    let mut mat: Mat3<f32> = Mat3::IDENTITY.scaled(Vec3(3.0, 4.0, 6.0));
+            mat            = mat.rotated(TAU, SignedAxis3::YPos);
+	        mat            = mat.rotated(TAU, SignedAxis3::XPos);
+	        mat            = mat.orthonormalized();
+    
+    assert!(Vec3(
+        mat.x.length(),   // You can also index Matrices by using `Axis3`.
+        mat.y.length(),
+        mat.z.length()
+    ).approx_eq(1.0.vec3()));
+
+    // And a bunch of other stuff...
 }
 ```
 
@@ -141,6 +200,7 @@ fn main() {
 ## Features
 - ℹ️ Simple yet intuitive syntax. No messy constructors!
 - ➕ Standard vector arithmetic and operations.
+- ✨ Matrix operation support!
 - ⛛ Trigonometric functions and angle manipulation.
 - ↗️ Standard vector operations such as `magnitude()`, `normalize()`, `dot()`, `cross()`, etc.
 - 🪞 Reflection and refraction functions.

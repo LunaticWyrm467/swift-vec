@@ -3,14 +3,29 @@ use core::fmt::{ Display, Debug };
 use num_traits::{ Num, Signed, Float, FloatConst, PrimInt, NumCast };
 
 
+/// Used for float comparisons.
+pub const EPSILON: f64 = 0.00001;
+
+
 /*
     Trait
         Definitions
 */
 
 
+/// Implements simple common constants for all scalars.
+pub trait ScalarConstants {
+    const ZERO: Self;
+    const ONE:  Self;
+}
+
+/// Implements simple common constants for signed scalars.
+pub trait SignedScalarConstants {
+    const NEG_ONE: Self;
+}
+
 /// Implements common behaviours and additional operations for all primitives.
-pub trait Scalar: Clone + Copy + Num + Default + PartialOrd + Display + Debug + NumCast {
+pub trait Scalar: Clone + Copy + Num + ScalarConstants + Default + PartialOrd + Display + Debug + NumCast {
 
     /// Returns the minimum value of this value and another.
     /// This is implemented manually to not rely on the Ord trait.
@@ -49,7 +64,7 @@ pub trait Scalar: Clone + Copy + Num + Default + PartialOrd + Display + Debug + 
 pub trait IntScalar<T: IntScalar<T>>: Scalar + Ord + PrimInt + IntUnique<T> {}
 
 /// Implements unique operations for all signed primitives.
-pub trait SignedScalar: Scalar + Signed {
+pub trait SignedScalar: Scalar + Signed + SignedScalarConstants {
 
     /// Calculates the derivative of the Bézier curve set by this scalar and the given control and terminal points
     /// at position `t`.
@@ -154,8 +169,6 @@ pub trait FloatScalar: SignedScalar + Float + FloatConst {
          * Uses Godot's method:
          * https://github.com/godotengine/godot/blob/f4b0c7a1ea8d86c1dfd96478ca12ad1360903d9d/core/math/math_funcs.h#L342-L362
          */
-
-        const EPSILON: f64 = 0.00001;
         
         if self == other {
 			return true;
@@ -167,6 +180,11 @@ pub trait FloatScalar: SignedScalar + Float + FloatConst {
 			tolerance = epsilon;
 		}
 		(self - other).abs() < tolerance
+    }
+
+    /// Checks if a floating point value is approximately zero.
+    fn approx_zero(self) -> bool {
+        self.approx_eq(Self::zero())
     }
 }
 
@@ -182,15 +200,25 @@ pub trait IntUnique<T: IntScalar<T>> {
 */
 
 
-impl <T: Clone + Copy + Num + Default + PartialOrd + Display + Debug + NumCast> Scalar for T {}
+impl <T: Clone + Copy + Num + ScalarConstants + Default + PartialOrd + Display + Debug + NumCast> Scalar for T {}
 impl <T: Scalar + Ord + PrimInt + IntUnique<T>> IntScalar<T> for T {}
-impl <T: Scalar + Signed> SignedScalar for T {}
+impl <T: Scalar + Signed + SignedScalarConstants> SignedScalar for T {}
 impl <T: SignedScalar + Float + FloatConst> FloatScalar for T {}
+
+impl ScalarConstants for u8 {
+    const ZERO: Self = 0;
+    const ONE:  Self = 1;
+}
 
 impl IntUnique<u8> for u8 {
     fn ilog(self, base: u8) -> u8 {
         self.ilog(base) as u8
     }
+}
+
+impl ScalarConstants for u16 {
+    const ZERO: Self = 0;
+    const ONE:  Self = 1;
 }
 
 impl IntUnique<u16> for u16 {
@@ -199,10 +227,20 @@ impl IntUnique<u16> for u16 {
     }
 }
 
+impl ScalarConstants for u32 {
+    const ZERO: Self = 0;
+    const ONE:  Self = 1;
+}
+
 impl IntUnique<u32> for u32 {
     fn ilog(self, base: u32) -> u32 {
         self.ilog(base) as u32
     }
+}
+
+impl ScalarConstants for u64 {
+    const ZERO: Self = 0;
+    const ONE:  Self = 1;
 }
 
 impl IntUnique<u64> for u64 {
@@ -211,10 +249,20 @@ impl IntUnique<u64> for u64 {
     }
 }
 
+impl ScalarConstants for u128 {
+    const ZERO: Self = 0;
+    const ONE:  Self = 1;
+}
+
 impl IntUnique<u128> for u128 {
     fn ilog(self, base: u128) -> u128 {
         self.ilog(base) as u128
     }
+}
+
+impl ScalarConstants for usize {
+    const ZERO: Self = 0;
+    const ONE:  Self = 1;
 }
 
 impl IntUnique<usize> for usize {
@@ -223,10 +271,28 @@ impl IntUnique<usize> for usize {
     }
 }
 
+impl ScalarConstants for isize {
+    const ZERO: Self = 0;
+    const ONE:  Self = 1;
+}
+
+impl SignedScalarConstants for isize {
+    const NEG_ONE: Self = -1;
+}
+
 impl IntUnique<isize> for isize {
     fn ilog(self, base: isize) -> isize {
         self.ilog(base) as isize
     }
+}
+
+impl ScalarConstants for i8 {
+    const ZERO: Self = 0;
+    const ONE:  Self = 1;
+}
+
+impl SignedScalarConstants for i8 {
+    const NEG_ONE: Self = -1;
 }
 
 impl IntUnique<i8> for i8 {
@@ -235,10 +301,28 @@ impl IntUnique<i8> for i8 {
     }
 }
 
+impl ScalarConstants for i16 {
+    const ZERO: Self = 0;
+    const ONE:  Self = 1;
+}
+
+impl SignedScalarConstants for i16 {
+    const NEG_ONE: Self = -1;
+}
+
 impl IntUnique<i16> for i16 {
     fn ilog(self, base: i16) -> i16 {
         self.ilog(base) as i16
     }
+}
+
+impl ScalarConstants for i32 {
+    const ZERO: Self = 0;
+    const ONE:  Self = 1;
+}
+
+impl SignedScalarConstants for i32 {
+    const NEG_ONE: Self = -1;
 }
 
 impl IntUnique<i32> for i32 {
@@ -247,14 +331,50 @@ impl IntUnique<i32> for i32 {
     }
 }
 
+impl ScalarConstants for i64 {
+    const ZERO: Self = 0;
+    const ONE:  Self = 1;
+}
+
+impl SignedScalarConstants for i64 {
+    const NEG_ONE: Self = -1;
+}
+
 impl IntUnique<i64> for i64 {
     fn ilog(self, base: i64) -> i64 {
         self.ilog(base) as i64
     }
 }
 
+impl ScalarConstants for i128 {
+    const ZERO: Self = 0;
+    const ONE:  Self = 1;
+}
+
+impl SignedScalarConstants for i128 {
+    const NEG_ONE: Self = -1;
+}
+
 impl IntUnique<i128> for i128 {
     fn ilog(self, base: i128) -> i128 {
         self.ilog(base) as i128
     }
+}
+
+impl ScalarConstants for f32 {
+    const ZERO: Self = 0.0;
+    const ONE:  Self = 1.0;
+}
+
+impl SignedScalarConstants for f32 {
+    const NEG_ONE: Self = -1.0;
+}
+
+impl ScalarConstants for f64 {
+    const ZERO: Self = 0.0;
+    const ONE:  Self = 1.0;
+}
+
+impl SignedScalarConstants for f64 {
+    const NEG_ONE: Self = -1.0;
 }

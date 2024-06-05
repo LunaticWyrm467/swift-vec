@@ -226,7 +226,7 @@ pub trait Rect<T: Scalar + Vectorized<T, V>, V: Vector<T, V, A>, R: Rect<T, V, R
     fn intersects(&self, other: &R, including_borders: bool) -> bool;
 }
 
-pub trait SignedRect<T: SignedScalar + Vectorized<T, V>, V: SignedVector<T, V, A>, R: SignedRect<T, V, R, A, S>, A, S>: Rect<T, V, R, A, S> {
+pub trait SignedRect<T: SignedScalar + Vectorized<T, V>, V: SignedVector<T, V, A, C>, R: SignedRect<T, V, R, A, S, C>, A, S, C: Vectorized<T, V>>: Rect<T, V, R, A, S> {
 
     /// Establishes a new Rectangle with the same size as the original, but with its position moved to the top-left corner
     /// in terms of local coordinates.<br>
@@ -238,7 +238,7 @@ pub trait SignedRect<T: SignedScalar + Vectorized<T, V>, V: SignedVector<T, V, A
     }
 }
 
-pub trait FloatRect<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A, C>, R: FloatRect<T, V, R, A, S, C>, A, S, C: Vectorized<T, V>>: SignedRect<T, V, R, A, S> {
+pub trait FloatRect<T: FloatScalar + Vectorized<T, V>, V: FloatVector<T, V, A, C>, R: FloatRect<T, V, R, A, S, C>, A, S, C: Vectorized<T, V>>: SignedRect<T, V, R, A, S, C> {
 
     /// Returns whether this rectangle is approximately equal to another.
     fn approx_eq(&self, other: &R) -> bool {

@@ -1,6 +1,6 @@
 [package]
 name    = "swift_vec"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 exclude = [
     ".github/*",
@@ -10,7 +10,7 @@ exclude = [
 
 keywords    = ["gamedev", "simulation", "math", "utility"]
 repository  = "https://github.com/LunaticWyrm467/SwiftVec"
-description = "A convenient and comfortable vector maths crate that supports 2D, 3D, and 4D vectors - along with additional scalar math."
+description = "A convenient and comfortable vector maths crate that supports 2D, 3D, and 4D matrices and vectors - along with additional scalar math."
 license     = "MIT OR Apache-2.0"
 
 [dependencies]
