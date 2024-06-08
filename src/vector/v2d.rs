@@ -86,6 +86,7 @@ impl <T: Scalar> IndexMut<Axis2> for Vec2<T> {
 /// Contains behaviours and methods for allowing for algebraic, geometric, and trigonometric operations,
 /// as well as interpolation and other common vector operations.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
+#[repr(C)]
 pub struct Vec2<T: Scalar>(pub T, pub T);
 
 impl <T: Scalar> VectorAbstract<T, Vec2<T>> for Vec2<T> {}

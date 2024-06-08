@@ -118,6 +118,7 @@ impl SignedAxis3 {
 /// Contains behaviours and methods for allowing for algebraic, geometric, and trigonometric operations,
 /// as well as interpolation and other common vector operations.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
+#[repr(C)]
 pub struct Vec3<T: Scalar>(pub T, pub T, pub T);
 
 impl <T: Scalar> VectorAbstract<T, Vec3<T>> for Vec3<T> {}
