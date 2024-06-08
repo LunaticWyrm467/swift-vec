@@ -332,6 +332,16 @@ impl <T: Scalar> Vec2<T> {
         Vec2(T::zero(), self[Y])
     }
 
+    /// Gets the x component.
+    pub fn x(&self) -> T {
+        self.0
+    }
+    
+    /// Gets the y component.
+    pub fn y(&self) -> T {
+        self.1
+    }
+
     /// Gets the x and y components of this `Vec2` as another identity function.
     pub fn xy(&self) -> Vec2<T> {
         self.identity()

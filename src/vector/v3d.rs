@@ -393,6 +393,21 @@ impl <T: Scalar> Vec3<T> {
         Vec3(T::zero(), T::zero(), self[Y])
     }
     
+    /// Gets the x component.
+    pub fn x(&self) -> T {
+        self.0
+    }
+    
+    /// Gets the y component.
+    pub fn y(&self) -> T {
+        self.1
+    }
+    
+    /// Gets the z component.
+    pub fn z(&self) -> T {
+        self.2
+    }
+    
     /// Gets the x and y compontnets of this `Vec3` as a `Vec2`.
     pub fn xy(&self) -> Vec2<T> {
         Vec2(self[X], self[Y])
