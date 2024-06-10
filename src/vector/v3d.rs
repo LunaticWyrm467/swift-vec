@@ -23,6 +23,9 @@
 //! for any of the non-shared behaviours of the 3D vector.
 //!
 
+#[cfg(feature = "glam")]
+use glam::{ Vec3 as GVec3, vec3, DVec3, dvec3, UVec3, uvec3, IVec3, ivec3 };
+
 use crate::mat::Mat3;
 use super::Axis2::{ X as X2, Y as Y2 };
 use super::*;
@@ -591,6 +594,49 @@ impl <T: FloatScalar> Vec3<T> {
             y: Vec3(self[Y] * other[X], self[Y] * other[Y], self[Y] * other[Z]),
             z: Vec3(self[Z] * other[X], self[Z] * other[Y], self[Z] * other[Z])
         }
+    }
+}
+
+
+/*
+    Glam
+        Support
+*/
+
+
+impl Vec3<f32> {
+
+    /// Converts this vector into a glam vector.
+    #[cfg(feature = "glam")]
+    pub fn to_glam(&self) -> GVec3 {
+        vec3(self.x(), self.y(), self.z())
+    }
+}
+
+impl Vec3<f64> {
+
+    /// Converts this vector into a glam vector.
+    #[cfg(feature = "glam")]
+    pub fn to_glam(&self) -> DVec3 {
+        dvec3(self.x(), self.y(), self.z())
+    }
+}
+
+impl Vec3<u32> {
+
+    /// Converts this vector into a glam vector.
+    #[cfg(feature = "glam")]
+    pub fn to_glam(&self) -> UVec3 {
+        uvec3(self.x(), self.y(), self.z())
+    }
+}
+
+impl Vec3<i32> {
+
+    /// Converts this vector into a glam vector.
+    #[cfg(feature = "glam")]
+    pub fn to_glam(&self) -> IVec3 {
+        ivec3(self.x(), self.y(), self.z())
     }
 }
 

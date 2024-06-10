@@ -23,6 +23,9 @@
 //! for any of the non-shared behaviours of the 2D vector.
 //!
 
+#[cfg(feature = "glam")]
+use glam::{ Vec2 as GVec2, vec2, DVec2, dvec2, UVec2, uvec2, IVec2, ivec2 };
+
 use super::*;
 
 
@@ -414,6 +417,49 @@ impl <T: FloatScalar> Vec2<T> {
     pub fn slerp(&self, other: Vec2<T>, t: T) -> Vec2<T> {
         let theta: T = self.angle_to(other);
         self.rotated(theta * t)
+    }
+}
+
+
+/*
+    Glam
+        Support
+*/
+
+
+impl Vec2<f32> {
+
+    /// Converts this vector into a glam vector.
+    #[cfg(feature = "glam")]
+    pub fn to_glam(&self) -> GVec2 {
+        vec2(self.x(), self.y())
+    }
+}
+
+impl Vec2<f64> {
+
+    /// Converts this vector into a glam vector.
+    #[cfg(feature = "glam")]
+    pub fn to_glam(&self) -> DVec2 {
+        dvec2(self.x(), self.y())
+    }
+}
+
+impl Vec2<u32> {
+
+    /// Converts this vector into a glam vector.
+    #[cfg(feature = "glam")]
+    pub fn to_glam(&self) -> UVec2 {
+        uvec2(self.x(), self.y())
+    }
+}
+
+impl Vec2<i32> {
+
+    /// Converts this vector into a glam vector.
+    #[cfg(feature = "glam")]
+    pub fn to_glam(&self) -> IVec2 {
+        ivec2(self.x(), self.y())
     }
 }
 
