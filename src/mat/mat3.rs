@@ -112,7 +112,7 @@ impl <T: Scalar> IndexMut<Axis3> for Mat3<T> {
 /// A 3x3 row-majory matrix which can be used to describe 3D transformations in computer graphics.
 /// More specifically, it can be used to descrive the shear (local position), rotation, and scale of an object in
 /// 3D space.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash)]
 #[repr(C)]
 pub struct Mat3<T: Scalar> {
     pub x: Vec3<T>,

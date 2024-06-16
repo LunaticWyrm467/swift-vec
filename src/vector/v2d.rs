@@ -88,7 +88,7 @@ impl <T: Scalar> IndexMut<Axis2> for Vec2<T> {
 /// A 2D Vector with an X and Y component.
 /// Contains behaviours and methods for allowing for algebraic, geometric, and trigonometric operations,
 /// as well as interpolation and other common vector operations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash)]
 #[repr(C)]
 pub struct Vec2<T: Scalar>(pub T, pub T);
 

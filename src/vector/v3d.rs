@@ -120,7 +120,7 @@ impl SignedAxis3 {
 /// A 3D Vector with an X, Y and Z component.
 /// Contains behaviours and methods for allowing for algebraic, geometric, and trigonometric operations,
 /// as well as interpolation and other common vector operations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash)]
 #[repr(C)]
 pub struct Vec3<T: Scalar>(pub T, pub T, pub T);
 
