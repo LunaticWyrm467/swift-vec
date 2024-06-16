@@ -140,7 +140,7 @@ impl <T: Scalar> Rect<T, Vec2<T>, Rect2<T>, Axis2, Side2> for Rect2<T> {
             end[Y] = point[Y];
         }
 
-        Rect2(origin, end)
+        Rect2(origin, end - origin)
     }
 
     fn grow_side(&self, side: Side2, amount: T) -> Rect2<T> {
